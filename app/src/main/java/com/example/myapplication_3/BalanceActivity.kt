@@ -11,7 +11,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 class BalanceActivity: AppCompatActivity() {
 
     private lateinit var tvBalance: TextView
-    private val SharedFinanceViewModel: SharedFinanceViewModel by viewModels()
+    private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,9 +19,10 @@ class BalanceActivity: AppCompatActivity() {
 
         tvBalance = findViewById(R.id.tvBalance)
 
-        SharedFinanceViewModel.getTotalBalance()
+        sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
-        tvBalance.text = "Ваш баланс: ${SharedFinanceViewModel.getTotalBalance()} руб"
+        tvBalance.text = "Ваш баланс: ${sharedFinanceViewModel.getTotalBalance()} руб"
+
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.setOnNavigationItemSelectedListener { item ->

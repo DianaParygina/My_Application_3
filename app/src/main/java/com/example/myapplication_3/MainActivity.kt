@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var editTextAddition: EditText
     private lateinit var buttonExpence: Button
-    private val SharedFinanceViewModel: SharedFinanceViewModel by viewModels()
+    private lateinit var SharedFinanceViewModel: SharedFinanceViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +24,9 @@ class MainActivity : AppCompatActivity() {
 
         editTextAddition = findViewById(R.id.editTextAddition)
         buttonExpence = findViewById(R.id.buttonExpence)
+
+        SharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
+
 
         buttonExpence.setOnClickListener {
             val expenceString = editTextAddition.text.toString()
