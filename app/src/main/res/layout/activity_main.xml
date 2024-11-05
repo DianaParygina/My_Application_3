@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="10dp">
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottom_navigation"
+        tools:ignore="NotSibling">
+
+        <EditText
+            android:id="@+id/editTextAddition"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100sp"
+            android:layout_marginStart="20sp"
+            android:ems="15"
+            android:hint="Введите ваши расходы"
+            android:inputType="text"
+            android:textSize="21sp" />
+
+        <Button
+            android:id="@+id/buttonExpence"
+            android:layout_width="191sp"
+            android:layout_height="97sp"
+            android:layout_marginStart="100sp"
+            android:layout_marginTop="200sp"
+            android:text="Добавить расход"
+            android:textSize="21sp" />
+
+    </FrameLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            app:menu="@menu/bottom_navigate_menu"
+            android:layout_gravity="bottom" />
+
+</RelativeLayout>
