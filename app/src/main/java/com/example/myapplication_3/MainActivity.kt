@@ -6,16 +6,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
-class MainActivity : BaseMenu() {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var editTextAddition: EditText
     private lateinit var buttonExpence: Button
-    private lateinit var SharedFinanceViewModel: SharedFinanceViewModel
-//        ViewModelProvider.AndroidViewModelFactory(application)
-//    }
+    private val SharedFinanceViewModel: SharedFinanceViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +31,7 @@ class MainActivity : BaseMenu() {
                 val expence = expenceString.toDoubleOrNull()
                 if (expence != null) {
                     SharedFinanceViewModel.addExpense(expence)
-                    showToast("Ваш баланс ${SharedFinanceViewModel.getTotalBalance()} руб")
+                    showToast("Ваш расход ${SharedFinanceViewModel.getTotalExpense()} руб")
                     editTextAddition.text.clear()
                 } else {
                     showToast("Введите корректное число")
@@ -41,12 +41,35 @@ class MainActivity : BaseMenu() {
             }
         }
 
-        updateBottomNavigationView(R.id.Main)
+//        updateBottomNavigationView(R.id.Main)
+
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView.setOnNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.listPicture -> {
+                    startActivity(Intent(this, BalanceActivity::class.java))
+                    true
+                }
+
+                R.id.Main -> {
+//                    startActivity(Intent(this, MainActivity::class.java))
+                    true
+                }
+
+                R.id.Income -> {
+                    startActivity(Intent(this, IncomeActivity::class.java))
+                    true
+                }
+
+                else -> false
+            }
+        }
+
     }
 
-    override fun getLayoutResId(): Int {
-        return R.layout.activity_main
-    }
+//    override fun getLayoutResId(): Int {
+//        return R.layout.activity_main
+//    }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

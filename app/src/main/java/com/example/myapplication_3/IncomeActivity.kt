@@ -13,13 +13,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class IncomeActivity : BaseMenu() {
+class IncomeActivity : AppCompatActivity() {
 
     private lateinit var editTextIncome: EditText
     private lateinit var buttonIncome: Button
-    private lateinit var SharedFinanceViewModel: SharedFinanceViewModel
-//        ViewModelProvider.AndroidViewModelFactory(application)
-//    }
+    private val SharedFinanceViewModel: SharedFinanceViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_income)
@@ -33,7 +32,7 @@ class IncomeActivity : BaseMenu() {
                 val income = incomeText.toDoubleOrNull()
                 if(income != null){
                     SharedFinanceViewModel.addIncome(income)
-                    showToast("Ваш баланс ${SharedFinanceViewModel.getTotalBalance()} руб")
+                    showToast("Ваш доход ${SharedFinanceViewModel.getTotalIncome()} руб")
                     editTextIncome.text.clear()
 
                 }else{
@@ -43,12 +42,35 @@ class IncomeActivity : BaseMenu() {
                 showToast("ведите сумму дохода")
             }
         }
-        updateBottomNavigationView(R.id.Income)
+//        updateBottomNavigationView(R.id.Income)
+
+
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView.setOnNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.listPicture -> {
+                    startActivity(Intent(this, BalanceActivity::class.java))
+                    true
+                }
+
+                R.id.Main -> {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    true
+                }
+
+                R.id.Income -> {
+//                    startActivity(Intent(this, IncomeActivity::class.java))
+                    true
+                }
+
+                else -> false
+            }
+        }
     }
 
-    override fun getLayoutResId(): Int {
-        return R.layout.activity_income
-    }
+//    override fun getLayoutResId(): Int {
+//        return R.layout.activity_income
+//    }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
