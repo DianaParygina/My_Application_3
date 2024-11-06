@@ -2,9 +2,7 @@ package com.example.myapplication_3
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 
 class SharedFinanceViewModel(application: Application) : AndroidViewModel(application) {
     private var totalIncome = 0.0

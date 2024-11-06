@@ -1,12 +1,7 @@
 package com.example.myapplication_3
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class BalanceActivity: BaseMenu() {
 

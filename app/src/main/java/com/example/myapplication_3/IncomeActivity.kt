@@ -1,13 +1,9 @@
 package com.example.myapplication_3
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class IncomeActivity : BaseMenu() {
 
@@ -21,7 +17,6 @@ class IncomeActivity : BaseMenu() {
         editTextIncome = findViewById(R.id.editTextIncome)
         buttonIncome = findViewById(R.id.buttonIncome)
 
-        // Получение ViewModel
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
         buttonIncome.setOnClickListener {

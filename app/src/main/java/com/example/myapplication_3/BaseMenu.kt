@@ -25,19 +25,18 @@ abstract class BaseMenu : AppCompatActivity() {
         }
 
         intent?.let {
-            // Проверяем, не пытаемся ли мы запустить текущую активность
             if (it.component?.className != this::class.java.name) {
                 startActivity(it)
             }
-            return true // Возвращаем true, если обработали клик
+            return true
         }
-        return false // Возвращаем false, если клик не обработан
+        return false
     }
 
 
     abstract fun getLayoutResId(): Int
 
-    protected fun updateBottomNavigationView(itemId: Int) { // Сделали protected
+    protected fun updateBottomNavigationView(itemId: Int) {
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = itemId
     }
