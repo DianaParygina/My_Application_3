@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseMenu() {
 
     private lateinit var editTextAddition: EditText
     private lateinit var buttonExpence: Button
@@ -19,7 +19,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
 
         editTextAddition = findViewById(R.id.editTextAddition)
@@ -43,36 +42,12 @@ class MainActivity : AppCompatActivity() {
                 showToast("Введите сумму расхода")
             }
         }
-
-//        updateBottomNavigationView(R.id.Main)
-
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigationView.setOnNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.listPicture -> {
-                    startActivity(Intent(this, BalanceActivity::class.java))
-                    true
-                }
-
-                R.id.Main -> {
-//                    startActivity(Intent(this, MainActivity::class.java))
-                    true
-                }
-
-                R.id.Income -> {
-                    startActivity(Intent(this, IncomeActivity::class.java))
-                    true
-                }
-
-                else -> false
-            }
-        }
-
+        updateBottomNavigationView(R.id.Main)
     }
 
-//    override fun getLayoutResId(): Int {
-//        return R.layout.activity_main
-//    }
+    override fun getLayoutResId(): Int {
+        return R.layout.activity_main
+    }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

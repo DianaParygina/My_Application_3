@@ -11,7 +11,6 @@ class SharedFinanceViewModel(application: Application) : AndroidViewModel(applic
     private var totalExpense = 0.0
 
     private val _totalBalance = MutableLiveData<Double>(0.0)
-    val totalBalance: LiveData<Double> = _totalBalance
 
     fun addIncome(amount: Double) {
         totalIncome += amount

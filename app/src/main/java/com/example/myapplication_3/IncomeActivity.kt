@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class IncomeActivity : AppCompatActivity() {
+class IncomeActivity : BaseMenu() {
 
     private lateinit var editTextIncome: EditText
     private lateinit var buttonIncome: Button
@@ -17,7 +17,6 @@ class IncomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_income)
 
         editTextIncome = findViewById(R.id.editTextIncome)
         buttonIncome = findViewById(R.id.buttonIncome)
@@ -40,25 +39,11 @@ class IncomeActivity : AppCompatActivity() {
                 showToast("Введите сумму дохода")
             }
         }
+        updateBottomNavigationView(R.id.Income)
+    }
 
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigationView.setOnNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.listPicture -> {
-                    startActivity(Intent(this, BalanceActivity::class.java))
-                    true
-                }
-                R.id.Main -> {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    true
-                }
-                R.id.Income -> {
-                    // Уже находимся в IncomeActivity, ничего не делаем
-                    true
-                }
-                else -> false
-            }
-        }
+    override fun getLayoutResId(): Int {
+        return R.layout.activity_income
     }
 
     private fun showToast(message: String) {
