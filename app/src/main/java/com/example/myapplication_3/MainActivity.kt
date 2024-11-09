@@ -4,31 +4,41 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 
 class MainActivity : BaseMenu() {
 
     private lateinit var editTextAddition: EditText
     private lateinit var buttonExpence: Button
-    private lateinit var SharedFinanceViewModel: SharedFinanceViewModel
+    private lateinit var expenseAdapter: ExpenseAdapter
+    private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
         editTextAddition = findViewById(R.id.editTextAddition)
         buttonExpence = findViewById(R.id.buttonExpence)
+        expenseAdapter = ExpenseAdapter(mutableListOf())
 
-        SharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
+        sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
+        val expenseItem = ExpenseAdapter(mutableListOf())
+
+        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = expenseItem
 
         buttonExpence.setOnClickListener {
             val expenceString = editTextAddition.text.toString()
             if (expenceString.isNotEmpty()) {
                 val expence = expenceString.toDoubleOrNull()
                 if (expence != null) {
-                    SharedFinanceViewModel.addExpense(expence)
-                    showToast("Ваш расход ${SharedFinanceViewModel.getTotalExpense()} руб")
+                    sharedFinanceViewModel.addExpense(expence)
+                        expenseAdapter.addExpense(expence.toString() + "руб")
+                        recyclerView.adapter?.notifyItemInserted(expenseAdapter.itemCount - 1) // Обновляем адаптер
+                        showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
                     editTextAddition.text.clear()
                 } else {
                     showToast("Введите корректное число")

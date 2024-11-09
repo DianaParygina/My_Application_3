@@ -13,6 +13,14 @@
         android:layout_above="@id/bottom_navigation"
         tools:ignore="NotSibling">
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="300sp"
+            android:scrollbars="horizontal"
+            tools:itemCount="1" />
+
         <EditText
             android:id="@+id/editTextAddition"
             android:layout_width="wrap_content"

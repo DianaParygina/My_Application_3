@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation ("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.activity:activity-ktx:1.2.0")
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)
