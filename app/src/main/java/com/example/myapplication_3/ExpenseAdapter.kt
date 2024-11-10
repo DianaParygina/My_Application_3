@@ -5,9 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.math.exp
 
-class ExpenseAdapter(private val expenseItems: MutableList<String>) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
+class ExpenseAdapter(private val expenseItems: MutableList<String>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
         val textView: TextView
@@ -38,12 +40,43 @@ class ExpenseAdapter(private val expenseItems: MutableList<String>) : RecyclerVi
     override fun getItemCount() = expenseItems.size
 
     fun addExpense(expense: String) {
-        if (expenseItems.isEmpty()) {
-            expenseItems.add(expense)
-            notifyItemInserted(0)
-        } else {
-            expenseItems[0] = expense
-            notifyItemChanged(0)
+        expenseItems.add(0, expense)
+        notifyItemInserted(0)
+    }
+
+
+    fun deleteExpense(position: Int) {
+        val expenseString = expenseItems[position].replace("руб", "").trim()
+        val expense = expenseString.toDoubleOrNull()
+        if (expense != null) {
+            sharedFinanceViewModel.deleteExpense(expense)
+            expenseItems.removeAt(position)
+            notifyItemRemoved(position)
         }
+
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.DOWN) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                deleteExpense(position)
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    fun getExpenseList(): List<String> {
+        return expenseItems
     }
 }

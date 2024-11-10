@@ -1,35 +1,33 @@
 package com.example.myapplication_3
-
 import android.app.AlertDialog
+import android.content.Context
 import android.os.Bundle
-import android.text.InputType
-import android.view.ContextMenu
-import android.view.MenuInflater
-import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.view.*
+import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.view.MenuItem
-
 
 class MainActivity : BaseMenu() {
 
     private lateinit var expenseAdapter: ExpenseAdapter
     private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
     private lateinit var recyclerView: RecyclerView
+    private val sharedPrefs by lazy { getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        expenseAdapter = ExpenseAdapter(mutableListOf("0"))
-        recyclerView = findViewById(R.id.recyclerView)
-
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
+        // Загрузка списка расходов из SharedPreferences
+        val expensesString = sharedPrefs.getString("expenseList", "")
+        val expenseItems = expensesString?.split(",")?.toMutableList() ?: mutableListOf()
+
+        expenseAdapter = ExpenseAdapter(expenseItems, sharedFinanceViewModel, this)
+        recyclerView = findViewById(R.id.recyclerView)
+
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = expenseAdapter
         registerForContextMenu(recyclerView)
 
@@ -60,7 +58,7 @@ class MainActivity : BaseMenu() {
         }
     }
 
-    private fun showAddExpenseDialog(){
+    private fun showAddExpenseDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Добавить расход")
 
@@ -74,6 +72,15 @@ class MainActivity : BaseMenu() {
                 if (expense != null) {
                     sharedFinanceViewModel.addExpense(expense)
                     expenseAdapter.addExpense(expense.toString() + "руб")
+
+                    // Сохранение нового списка расходов в SharedPreferences
+                    val updatedExpenses = expenseAdapter.getExpenseList()
+                    val expensesString = updatedExpenses.joinToString(",")
+                    with (sharedPrefs.edit()) {
+                        putString("expenseList", expensesString)
+                        apply()
+                    }
+
                     showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
                 } else {
                     showToast("Введите корректное число")
