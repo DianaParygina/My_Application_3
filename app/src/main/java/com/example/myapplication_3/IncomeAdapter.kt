@@ -1,5 +1,6 @@
 package com.example.myapplication_3
 
+import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,11 +9,19 @@ import androidx.recyclerview.widget.RecyclerView
 
 class IncomeAdapter(private val incomeItems: MutableList<String>) : RecyclerView.Adapter<IncomeAdapter.ViewHolder>(){
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
         val textView: TextView
 
         init {
             textView = view.findViewById(R.id.textViewIncome)
+            view.setOnCreateContextMenuListener(this)
+        }
+
+        override fun onCreateContextMenu(
+            menu: ContextMenu?,
+            v: View?,
+            menuInfo: ContextMenu.ContextMenuInfo?
+        ) {
         }
     }
 
@@ -31,8 +40,12 @@ class IncomeAdapter(private val incomeItems: MutableList<String>) : RecyclerView
     override fun getItemCount() = incomeItems.size
 
     fun addIncome(income: String){
-        incomeItems.add(income)
-        notifyItemInserted(incomeItems.size - 1)
+        if(incomeItems.isEmpty()) {
+            incomeItems.add(income)
+            notifyItemInserted(0)
+        }else{
+            incomeItems[0] = income
+            notifyItemChanged(0)
+        }
     }
-
 }

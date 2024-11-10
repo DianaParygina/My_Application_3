@@ -16,30 +16,8 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
-            android:layout_height="46dp"
-            android:layout_marginTop="300sp"
-            android:scrollbars="horizontal"
-            tools:itemCount="1" />
-
-        <EditText
-            android:id="@+id/editTextAddition"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="100sp"
-            android:layout_marginStart="20sp"
-            android:ems="15"
-            android:hint="Введите ваши расходы"
-            android:inputType="text"
-            android:textSize="21sp" />
-
-        <Button
-            android:id="@+id/buttonExpence"
-            android:layout_width="191sp"
-            android:layout_height="97sp"
-            android:layout_marginStart="100sp"
-            android:layout_marginTop="200sp"
-            android:text="Добавить расход"
-            android:textSize="21sp" />
+            android:scrollbars="horizontal"/>
 
     </FrameLayout>
 

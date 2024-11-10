@@ -2,4 +2,6 @@
     <string name="app_name">Главный экран</string>
     <string name="income">Доходы</string>
     <string name="list">Баланс</string>
+    <string name="add_expense_title">Добавить расход</string>
+    <string name="add_income_title">Добавить доход</string>
 </resources>

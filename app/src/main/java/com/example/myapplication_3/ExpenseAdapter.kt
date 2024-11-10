@@ -1,5 +1,6 @@
 package com.example.myapplication_3
 
+import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,13 +9,19 @@ import androidx.recyclerview.widget.RecyclerView
 
 class ExpenseAdapter(private val expenseItems: MutableList<String>) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
         val textView: TextView
 
         init {
             textView = view.findViewById(R.id.textViewExpense)
+            view.setOnCreateContextMenuListener(this)
+        }
+
+
+        override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
         }
     }
+
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(viewGroup.context)
@@ -30,9 +37,13 @@ class ExpenseAdapter(private val expenseItems: MutableList<String>) : RecyclerVi
 
     override fun getItemCount() = expenseItems.size
 
-    fun addExpense(expense: String){
-        expenseItems.add(expense)
-        notifyItemInserted(expenseItems.size - 1)
+    fun addExpense(expense: String) {
+        if (expenseItems.isEmpty()) {
+            expenseItems.add(expense)
+            notifyItemInserted(0)
+        } else {
+            expenseItems[0] = expense
+            notifyItemChanged(0)
+        }
     }
-
 }
