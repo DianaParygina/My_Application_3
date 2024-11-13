@@ -28,14 +28,11 @@ class IncomeActivity : BaseMenu() {
 
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
-//        // Загрузка списка доходов из SharedPreferences
-//        val incomeString = sharedPrefs.getString("incomeList", "")
-//        val incomeItems = incomeString?.split(",")?.toMutableList() ?: mutableListOf()
-
-        incomeAdapter = IncomeAdapter(mutableListOf("0"), sharedFinanceViewModel,this)
+        incomeAdapter = IncomeAdapter(mutableListOf("0"), sharedFinanceViewModel, this, sharedPrefs)
         recyclerView = findViewById(R.id.recyclerView)
 
-        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = incomeAdapter
         registerForContextMenu(recyclerView)
 
@@ -50,7 +47,11 @@ class IncomeActivity : BaseMenu() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
+    override fun onCreateContextMenu(
+        menu: ContextMenu?,
+        v: View?,
+        menuInfo: ContextMenu.ContextMenuInfo?
+    ) {
         super.onCreateContextMenu(menu, v, menuInfo)
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.context_menu_income, menu)
@@ -62,11 +63,12 @@ class IncomeActivity : BaseMenu() {
                 showAddIncomeDialog()
                 true
             }
+
             else -> super.onContextItemSelected(item)
         }
     }
 
-    private fun showAddIncomeDialog(){
+    private fun showAddIncomeDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Добавить доход")
 
@@ -77,28 +79,29 @@ class IncomeActivity : BaseMenu() {
             val incomeString = input.text.toString()
             if (incomeString.isNotEmpty()) {
                 val income = incomeString.toDoubleOrNull()
-                if (income!= null) {
+                if (income != null) {
                     sharedFinanceViewModel.addIncome(income)
                     incomeAdapter.addIncome(income.toString() + "руб")
                     val updatedIncome = incomeAdapter.getIncomesList()
                     val incomeString = updatedIncome.joinToString(",")
-                    with (sharedPrefs.edit()) {
+                    with(sharedPrefs.edit()) {
                         putString("incomeList", incomeString)
                         apply()
                     }
 
-                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalIncome()} руб")
+                    showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }
             } else {
-                showToast("Введите сумму расхода")
+                showToast("Введите сумму дохода")
             }
         }
         builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
 
         builder.show()
     }
+
 
     override fun onResume() {
         super.onResume()

@@ -20,11 +20,7 @@ class MainActivity : BaseMenu() {
 
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
-//        // Загрузка списка расходов из SharedPreferences
-//        val expensesString = sharedPrefs.getString("expenseList", "")
-//        val expenseItems = expensesString?.split(",")?.toMutableList() ?: mutableListOf()
-
-        expenseAdapter = ExpenseAdapter(mutableListOf("0"), sharedFinanceViewModel, this)
+        expenseAdapter = ExpenseAdapter(mutableListOf("0"), sharedFinanceViewModel, this, sharedPrefs)
         recyclerView = findViewById(R.id.recyclerView)
 
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
