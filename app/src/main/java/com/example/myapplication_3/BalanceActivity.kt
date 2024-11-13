@@ -24,5 +24,3 @@ class BalanceActivity: BaseMenu() {
         return R.layout.activity_list
     }
 }
-
-

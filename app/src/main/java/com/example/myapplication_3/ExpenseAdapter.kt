@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.exp
 
-class ExpenseAdapter(private val expenseItems: MutableList<String>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
+class ExpenseAdapter(val expenseItems: MutableList<String>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
         val textView: TextView
@@ -40,8 +40,8 @@ class ExpenseAdapter(private val expenseItems: MutableList<String>, private val 
     override fun getItemCount() = expenseItems.size
 
     fun addExpense(expense: String) {
-        expenseItems.add(0, expense)
-        notifyItemInserted(0)
+            expenseItems.add(0, expense)
+            notifyItemInserted(0)
     }
 
 
@@ -52,6 +52,12 @@ class ExpenseAdapter(private val expenseItems: MutableList<String>, private val 
             sharedFinanceViewModel.deleteExpense(expense)
             expenseItems.removeAt(position)
             notifyItemRemoved(position)
+        }
+
+        val updatedExpenses = expenseItems.joinToString(",")
+        with (activity.sharedPrefs.edit()) {
+            putString("expenseList", updatedExpenses)
+            apply()
         }
 
     }

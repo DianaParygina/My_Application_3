@@ -1,6 +1,7 @@
 package com.example.myapplication_3
 
 import android.app.AlertDialog
+import android.content.Context
 import android.os.Bundle
 import android.text.InputType
 import android.view.ContextMenu
@@ -10,6 +11,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.lifecycle.SavedStateViewModelFactory
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -18,17 +21,21 @@ class IncomeActivity : BaseMenu() {
     private lateinit var incomeAdapter: IncomeAdapter
     private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
     private lateinit var recyclerView: RecyclerView
+    val sharedPrefs by lazy { getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        incomeAdapter = IncomeAdapter(mutableListOf("0"))
-        recyclerView = findViewById(R.id.recyclerView)
-
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
+//        // Загрузка списка доходов из SharedPreferences
+//        val incomeString = sharedPrefs.getString("incomeList", "")
+//        val incomeItems = incomeString?.split(",")?.toMutableList() ?: mutableListOf()
+
+        incomeAdapter = IncomeAdapter(mutableListOf("0"), sharedFinanceViewModel,this)
+        recyclerView = findViewById(R.id.recyclerView)
+
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = incomeAdapter
         registerForContextMenu(recyclerView)
 
@@ -73,6 +80,13 @@ class IncomeActivity : BaseMenu() {
                 if (income!= null) {
                     sharedFinanceViewModel.addIncome(income)
                     incomeAdapter.addIncome(income.toString() + "руб")
+                    val updatedIncome = incomeAdapter.getIncomesList()
+                    val incomeString = updatedIncome.joinToString(",")
+                    with (sharedPrefs.edit()) {
+                        putString("incomeList", incomeString)
+                        apply()
+                    }
+
                     showToast("Ваш расход ${sharedFinanceViewModel.getTotalIncome()} руб")
                 } else {
                     showToast("Введите корректное число")
@@ -84,5 +98,18 @@ class IncomeActivity : BaseMenu() {
         builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
 
         builder.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // Загрузка списка доходов из SharedPreferences
+        val incomeString = sharedPrefs.getString("incomeList", "")
+        val incomeItems = incomeString?.split(",")?.toMutableList() ?: mutableListOf()
+
+        // Очистите текущий список в адаптере и добавьте новые элементы
+        incomeAdapter.incomeItems.clear()
+        incomeAdapter.incomeItems.addAll(incomeItems)
+        incomeAdapter.notifyDataSetChanged()
     }
 }

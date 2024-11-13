@@ -13,18 +13,18 @@ class MainActivity : BaseMenu() {
     private lateinit var expenseAdapter: ExpenseAdapter
     private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
     private lateinit var recyclerView: RecyclerView
-    private val sharedPrefs by lazy { getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
+    val sharedPrefs by lazy { getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
-        // Загрузка списка расходов из SharedPreferences
-        val expensesString = sharedPrefs.getString("expenseList", "")
-        val expenseItems = expensesString?.split(",")?.toMutableList() ?: mutableListOf()
+//        // Загрузка списка расходов из SharedPreferences
+//        val expensesString = sharedPrefs.getString("expenseList", "")
+//        val expenseItems = expensesString?.split(",")?.toMutableList() ?: mutableListOf()
 
-        expenseAdapter = ExpenseAdapter(expenseItems, sharedFinanceViewModel, this)
+        expenseAdapter = ExpenseAdapter(mutableListOf("0"), sharedFinanceViewModel, this)
         recyclerView = findViewById(R.id.recyclerView)
 
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -72,8 +72,6 @@ class MainActivity : BaseMenu() {
                 if (expense != null) {
                     sharedFinanceViewModel.addExpense(expense)
                     expenseAdapter.addExpense(expense.toString() + "руб")
-
-                    // Сохранение нового списка расходов в SharedPreferences
                     val updatedExpenses = expenseAdapter.getExpenseList()
                     val expensesString = updatedExpenses.joinToString(",")
                     with (sharedPrefs.edit()) {
@@ -92,5 +90,18 @@ class MainActivity : BaseMenu() {
         builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
 
         builder.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // Загрузка списка расходов из SharedPreferences
+        val expensesString = sharedPrefs.getString("expenseList", "")
+        val expenseItems = expensesString?.split(",")?.toMutableList() ?: mutableListOf()
+
+        // Очистите текущий список в адаптере и добавьте новые элементы
+        expenseAdapter.expenseItems.clear()
+        expenseAdapter.expenseItems.addAll(expenseItems)
+        expenseAdapter.notifyDataSetChanged()
     }
 }
