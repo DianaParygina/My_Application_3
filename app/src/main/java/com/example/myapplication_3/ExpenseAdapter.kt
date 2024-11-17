@@ -13,13 +13,17 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.exp
 
-class ExpenseAdapter(val expenseItems: MutableList<String>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity, private val sharedPrefs: SharedPreferences) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
+class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity, private val sharedPrefs: SharedPreferences) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
-        val textView: TextView
+        val textViewExpense: TextView
+        val textViewType: TextView
+        val textViewDate: TextView
 
         init {
-            textView = view.findViewById(R.id.textViewExpense)
+            textViewExpense = view.findViewById(R.id.textViewExpense)
+            textViewType = view.findViewById(R.id.textViewExpenseType)
+            textViewDate = view.findViewById(R.id.textViewExpenseDate)
             view.setOnCreateContextMenuListener(this)
         }
 
@@ -37,33 +41,42 @@ class ExpenseAdapter(val expenseItems: MutableList<String>, private val sharedFi
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
+        val expenseItem = expenseItems[position]
+        viewHolder.textViewExpense.text = expenseItem.expense.toString()
+        viewHolder.textViewType.text = expenseItem.type
+        viewHolder.textViewDate.text = expenseItem.date
 
-        viewHolder.textView.text = expenseItems[position]
+        viewHolder.itemView.setOnLongClickListener { view ->
+            activity.showContextMenuForItem(position, view)
+            true
+        }
     }
 
     override fun getItemCount() = expenseItems.size
 
-    fun addExpense(expense: String) {
-            expenseItems.add(0, expense)
-            notifyItemInserted(0)
+    fun addExpense(expense: ExpenseItem) {
+        expenseItems.add(0, expense)
+        notifyItemInserted(0)
+
+        saveExpensesToSharedPrefs()
+    }
+
+    private fun saveExpensesToSharedPrefs() {
+        val incomeStrings = expenseItems.map { "${it.expense },${ it.date},${it.type}" }
+        with(sharedPrefs.edit()) {
+            putString("expenseList", incomeStrings.joinToString(";"))
+            apply()
+        }
     }
 
 
     fun deleteExpense(position: Int) {
-        val expenseString = expenseItems[position].replace("руб", "").trim()
-        val expense = expenseString.toDoubleOrNull()
-        if (expense != null) {
-            sharedFinanceViewModel.deleteExpense(expense)
-            expenseItems.removeAt(position)
-            notifyItemRemoved(position)
-        }
+        val expenseItem = expenseItems[position]
+        sharedFinanceViewModel.deleteExpense(expenseItem.expense)
+        expenseItems.removeAt(position)
+        notifyItemRemoved(position)
 
-        val updatedExpenses = expenseItems.joinToString(",")
-        with (activity.sharedPrefs.edit()) {
-            putString("expenseList", updatedExpenses)
-            apply()
-        }
-
+        saveExpensesToSharedPrefs()
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -90,12 +103,6 @@ class ExpenseAdapter(val expenseItems: MutableList<String>, private val sharedFi
         itemTouchHelper.attachToRecyclerView(recyclerView)
     }
 
-    fun getExpenseList(): List<String> {
-        return expenseItems
-    }
-
-
-
 
 
 
@@ -103,31 +110,31 @@ class ExpenseAdapter(val expenseItems: MutableList<String>, private val sharedFi
         val builder = AlertDialog.Builder(activity)
         builder.setTitle("Редактировать расход")
 
-        val input = EditText(activity)
+        val view = LayoutInflater.from(activity).inflate(R.layout.dialog_add_expense, null)
+        builder.setView(view)
 
-        val currentExpenseString = expenseItems[position].replace("руб", "").trim()
-        input.setText(currentExpenseString)
+        val inputExpense = view.findViewById<EditText>(R.id.input_expense)
+        val inputDate = view.findViewById<EditText>(R.id.input_date_expense)
+        val inputType = view.findViewById<EditText>(R.id.input_type_expense)
 
-        builder.setView(input)
+        val currentExpenseItem = expenseItems[position]
+        inputExpense.setText(currentExpenseItem.expense.toString())
+        inputDate.setText(currentExpenseItem.date)
+        inputType.setText(currentExpenseItem.type)
 
         builder.setPositiveButton("OK") { _, _ ->
-            val newExpenseString = input.text.toString()
+            val newExpenseString = inputExpense.text.toString()
+            val newDate = inputDate.text.toString()
+            val newType = inputType.text.toString()
             if (newExpenseString.isNotEmpty()) {
                 val newExpense = newExpenseString.toDoubleOrNull()
                 if (newExpense!= null) {
-                    val oldExpense = currentExpenseString.toDoubleOrNull()
-                    if(oldExpense!=null) {
-                        sharedFinanceViewModel.deleteExpense(oldExpense)
+                        sharedFinanceViewModel.deleteExpense(currentExpenseItem.expense)
                         sharedFinanceViewModel.addExpense(newExpense)
-                        expenseItems[position] = newExpense.toString()
+                        expenseItems[position] = ExpenseItem(newExpense, newDate, newType)
                         notifyItemChanged(position)
-                        val updatedExpenses = expenseItems.joinToString(",")
-                        with(sharedPrefs.edit()) {
-                            putString("expenseList", updatedExpenses)
-                            apply()
-                        }
-                    }
-                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalIncome()} руб")
+                        saveExpensesToSharedPrefs()
+                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }

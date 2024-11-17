@@ -132,7 +132,7 @@ class IncomeAdapter(val incomeItems: MutableList<IncomeItem>, private val shared
             val newType = inputType.text.toString()
             if (newIncomeString.isNotEmpty()) {
                 val newIncome = newIncomeString.toDoubleOrNull()
-                    if(newIncome!=null) {
+                if(newIncome!=null) {
                         sharedFinanceViewModel.deleteIncome(currentIncomeItem.amount)
                         sharedFinanceViewModel.addIncome(newIncome)
                         incomeItems[position] = IncomeItem(newIncome, newDate, newType)
