@@ -12,7 +12,6 @@ class SharedFinanceViewModel(application: Application) : AndroidViewModel(applic
 
     private val _totalBalance = MutableLiveData<Double>(0.0)
 
-    // Добавлен блок init
     init {
         val sharedPrefs = getApplication<Application>().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
 
@@ -26,7 +25,7 @@ class SharedFinanceViewModel(application: Application) : AndroidViewModel(applic
         val expenseItems = expensesString?.split(",")?.mapNotNull { it.replace("руб", "").trim().toDoubleOrNull() } ?: emptyList()
         totalExpense = expenseItems.sum()
 
-        updateTotalBalance() // Обновляем баланс после загрузки данных
+        updateTotalBalance()
     }
 
     fun addIncome(amount: Double) {
