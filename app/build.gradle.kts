@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace = "com.example.myapplication_3"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.myapplication_3"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -40,9 +40,12 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.1")
-    implementation ("androidx.recyclerview:recyclerview:1.2.1")
-    implementation("androidx.activity:activity-ktx:1.2.0")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7")
+    implementation ("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation ("org.apache.poi:poi:5.3.0")
+    implementation ("com.itextpdf:itext7-core:9.0.0")
+    implementation(libs.androidx.media3.exoplayer)
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)
     androidTestImplementation(libs.androidx.junit)
