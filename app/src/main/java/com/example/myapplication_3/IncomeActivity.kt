@@ -3,6 +3,7 @@ package com.example.myapplication_3
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.ContextMenu
@@ -13,11 +14,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -41,11 +44,35 @@ class IncomeActivity : BaseMenu() {
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = incomeAdapter
 
+
+        val buttonPdfIncome = findViewById<Button>(R.id.button_pdf_income)
+        buttonPdfIncome.setOnClickListener {
+            val incomes = incomeAdapter.incomeItems
+            PDFGeneratorIncome.generatePdf(this, incomes)
+            Toast.makeText(this, "PDF отчет по доходам создан", Toast.LENGTH_SHORT).show()
+        }
+
+        val buttonPdfIncomeOpen = findViewById<Button>(R.id.button_pdf_income_open)
+        buttonPdfIncomeOpen.setOnClickListener {
+            val pdfPathIncome = PDFGeneratorIncome.getPdfFilePath(this)
+            if (pdfPathIncome != null) {
+                val uriIncome = FileProvider.getUriForFile(this, "${packageName}.provider", File(pdfPathIncome))
+                val intentIncome = Intent(Intent.ACTION_VIEW)
+                intentIncome.setDataAndType(uriIncome, "application/pdf")
+                intentIncome.flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                startActivity(Intent.createChooser(intentIncome, "Открыть PDF"))
+            }
+        }
+
+
+
+
         val snapHelper = PagerSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)
 
         updateBottomNavigationView(R.id.Income)
     }
+
 
     override fun getLayoutResId(): Int {
         return R.layout.activity_income

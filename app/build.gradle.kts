@@ -44,7 +44,7 @@ dependencies {
     implementation ("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.activity:activity-ktx:1.9.3")
     implementation ("org.apache.poi:poi:5.3.0")
-    implementation ("com.itextpdf:itext7-core:9.0.0")
+    implementation("com.itextpdf:itextg:5.5.10") // или более новую версию
     implementation(libs.androidx.media3.exoplayer)
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)

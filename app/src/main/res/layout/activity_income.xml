@@ -17,6 +17,22 @@
             android:layout_height="wrap_content"
             android:scrollbars="horizontal" />
 
+        <Button
+            android:id="@+id/button_pdf_income"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Создать отчёт в pdf"
+            android:layout_marginStart="90dp"
+            android:layout_marginTop="100dp"/>
+
+
+        <Button
+            android:id="@+id/button_pdf_income_open"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Открыть отчёт в pdf"
+            android:layout_marginStart="90dp"
+            android:layout_marginTop="150dp"/>
     </FrameLayout>
 
         <com.google.android.material.bottomnavigation.BottomNavigationView

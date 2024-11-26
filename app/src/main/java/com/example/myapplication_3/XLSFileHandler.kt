@@ -20,55 +20,57 @@ object XLSFileHandler {
         xlsFile = File(context.filesDir, fileName)
         Log.d("XLSFileHandler", "XLS File Path: ${xlsFile?.absolutePath}")
         if (!xlsFile!!.exists()) {
-            createWorkbook()
+            workbook = HSSFWorkbook()
+            val sheet = workbook!!.createSheet("Expenses") // Создаем начальный лист
+
+            // Создаем строку заголовков
+            val headerRow = sheet.createRow(0)
+            headerRow.createCell(0).setCellValue("Expense")
+            headerRow.createCell(1).setCellValue("Data")
+            headerRow.createCell(2).setCellValue("Type")
+
+            saveWorkbook()
+
         } else {
             loadWorkbook()
         }
+    }
 
-        // Добавляем initialExpense, если его нет в файле
-        val sheet = workbook!!.getSheetAt(0)
-        if (sheet.lastRowNum == 0) { // Проверяем, есть ли данные (кроме заголовка)
-            val initialExpense = ExpenseItem(0.0, "", "")
-            val row = sheet.createRow(1)
-            row.createCell(0).setCellValue(initialExpense.expense)
-            row.createCell(1).setCellValue(initialExpense.date)
-            row.createCell(2).setCellValue(initialExpense.type)
-            saveWorkbook()
+    private fun saveWorkbook() {
+        try {
+            FileOutputStream(xlsFile).use { fileOut ->
+                workbook?.write(fileOut)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 
-    private fun createWorkbook() {
-        workbook = HSSFWorkbook()
-        val sheet = workbook!!.createSheet("Expenses")
 
-        saveWorkbook()
-    }
-
-    private fun createSheet(sheetName: String) {
-        val sheet = workbook!!.createSheet(sheetName)
-        val headerRow = sheet.createRow(0)
-        // Заголовки столбцов
-        headerRow.createCell(0).setCellValue("Expense") // Общий заголовок для суммы/расхода
-        headerRow.createCell(1).setCellValue("Date")
-        headerRow.createCell(2).setCellValue("Type")
-    }
-
-    private fun saveWorkbook() { try {
-        FileOutputStream(xlsFile).use { fileOut ->
-            workbook?.write(fileOut)
+    private fun loadWorkbook() {
+        try {
+            FileInputStream(xlsFile).use { fileIn ->
+                workbook = HSSFWorkbook(fileIn)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
     }
 
-    private fun loadWorkbook() { try {
-        FileInputStream(xlsFile).use { fileIn ->
-            workbook = HSSFWorkbook(fileIn)
+
+    fun loadDataFromXLS(): List<ExpenseItem> {
+        val sheet = workbook?.getSheetAt(0) ?: return emptyList()
+        val expenses = mutableListOf<ExpenseItem>()
+
+        for (rowIndex in 1..sheet.lastRowNum) { // Начнем с 1, чтобы пропустить заголовок
+            val row = sheet.getRow(rowIndex) ?: continue
+            val expense = getCellValue(row.getCell(0)).toDoubleOrNull() ?: continue
+            val date = getCellValue(row.getCell(1))
+            val type = getCellValue(row.getCell(2))
+
+            expenses.add(ExpenseItem(expense, date, type))
         }
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
+        return expenses
     }
 
     fun addLineToXLS(expenseItem: ExpenseItem) {
@@ -80,124 +82,70 @@ object XLSFileHandler {
         saveWorkbook()
     }
 
-
-
-    fun saveExpensesData(context: Context, expenseList: List<ExpenseItem>){
-        saveDataToXLS(expenseList) // Правильно вызываем saveDataToXLS
-        saveWorkbook()
-
-    }
-
-    private fun saveDataToXLS(data: List<ExpenseItem>) { // Принимаем List<ExpenseItem>
+    fun updateLineInXLS(oldLine: String, newLine: String) {
         val sheet = workbook?.getSheetAt(0) ?: return
-
-        // Удаление предыдущих данных (можно оставить, если нужно)
-        val lastRowNum = sheet.lastRowNum
-        if (lastRowNum > 0) {
-            for (i in lastRowNum downTo 1) {
-                sheet.removeRow(sheet.getRow(i))
+        for (row in sheet) {
+            val cell = row.getCell(0)
+            if (cell?.stringCellValue == oldLine) {
+                val parts = newLine.split(",")
+                parts.forEachIndexed { colIndex, part ->
+                    val newCell = row.createCell(colIndex)
+                    newCell.setCellValue(part)
+                }
+                saveWorkbook()
+                return
             }
         }
-
-        // Запись новых данных
-        data.forEachIndexed { index, expenseItem ->
-            val row = sheet.createRow(index + 1)
-            row.createCell(0).setCellValue(expenseItem.expense)
-            row.createCell(1).setCellValue(expenseItem.date)
-            row.createCell(2).setCellValue(expenseItem.type)
-        }
-
-        saveWorkbook()
     }
 
-
-    fun updateLineInXLS(oldExpense: ExpenseItem, newExpense: ExpenseItem) {
+    fun deleteLineFromXLS(line: String) {
         val sheet = workbook?.getSheetAt(0) ?: return
-        for (rowIndex in 1..sheet.lastRowNum) {
-            val row = sheet.getRow(rowIndex)
-            if (row != null) {
-                val expense = getCellValue(row.getCell(0)).toDoubleOrNull()
-                val date = getCellValue(row.getCell(1))
-                val type = getCellValue(row.getCell(2))
-                if(expense != null) {
-                    val currentExpense = ExpenseItem(expense, date, type)
+        val rowIndex = sheet.iterator().asSequence().toList()
+            .indexOfFirst { it.getCell(0)?.stringCellValue == line }
 
-                    if (currentExpense == oldExpense) {
-                        row.getCell(0).setCellValue(newExpense.expense)
-                        row.getCell(1).setCellValue(newExpense.date)
-                        row.getCell(2).setCellValue(newExpense.type)
-                        saveWorkbook()
-                        return
-                    }
-                }
+        if (rowIndex >= 0) {
+            sheet.removeRow(sheet.getRow(rowIndex)) // Удаляем строку напрямую
+
+            // Сдвигаем оставшиеся строки вверх
+            if (rowIndex < sheet.lastRowNum) {
+                sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
             }
+
+            // Удаляем последнюю строку, если она пустая после сдвига
+            val lastRow = sheet.getRow(sheet.lastRowNum)
+            if (lastRow == null || lastRow.physicalNumberOfCells == 0) {
+                sheet.removeRow(lastRow)
+            }
+
+            saveWorkbook()
+        }
+    }
+
+    private fun copyRowData(sourceRow: Row?, destinationRow: Row) {
+        if (sourceRow == null) return
+        for (cellIndex in 0 until sourceRow.physicalNumberOfCells) {
+            val sourceCell = sourceRow.getCell(cellIndex)
+            val destinationCell = destinationRow.createCell(cellIndex)
+            copyCellValue(sourceCell, destinationCell)
         }
     }
 
 
-    fun deleteLineFromXLS(expenseItem: ExpenseItem) {
-        val sheet = workbook?.getSheetAt(0) ?: return
-
-        for (rowIndex in 1..sheet.lastRowNum) {
-            val row = sheet.getRow(rowIndex)
-            if (row != null) {
-                val expense = getCellValue(row.getCell(0)).toDoubleOrNull()
-                val date = getCellValue(row.getCell(1))
-                val type = getCellValue(row.getCell(2))
-                if (expense != null) {
-                    val currentExpense = ExpenseItem(expense, date, type)
-
-                    if (currentExpense == expenseItem) {
-                        sheet.removeRow(sheet.getRow(rowIndex))
-                        if (rowIndex < sheet.lastRowNum) {
-                            sheet.shiftRows(rowIndex+1, sheet.lastRowNum, -1)
-                        }
-                        saveWorkbook()
-                        return
-                    }
-                }
-            }
+    private fun copyCellValue(source: Cell?, destination: Cell) {
+        if (source == null) return
+        when (source.cellType) {
+            CellType.STRING -> destination.setCellValue(source.stringCellValue)
+            CellType.NUMERIC -> destination.setCellValue(source.numericCellValue)
+            CellType.BOOLEAN -> destination.setCellValue(source.booleanCellValue)
+            else -> destination.setCellValue("") // Для других типов данных
         }
-
     }
 
-
-
-
-    fun loadDataFromXLS(): List<ExpenseItem> {
-        val sheet = workbook?.getSheetAt(0) ?: return emptyList()
-        val expenses = mutableListOf<ExpenseItem>()
-
-        for (rowIndex in 1..sheet.lastRowNum) {
-            val row = sheet.getRow(rowIndex)
-            if (row != null) {
-                try {
-                    val expense = row.getCell(0).numericCellValue.toDouble()
-                    val date = row.getCell(1)?.stringCellValue ?: ""
-                    val type = row.getCell(2)?.stringCellValue ?: ""
-                    expenses.add(ExpenseItem(expense, date, type))
-
-                } catch (e: Exception) {
-                    // Обработка ошибок чтения ячеек (например, если ячейка не того типа)
-                    // Логирование или другие действия
-                }
-
-            }
-        }
-        return expenses
-    }
 
 
 
     private fun getCellValue(cell: Cell?): String {
-        return when (cell?.cellType) {
-            CellType.STRING -> cell.stringCellValue ?: ""
-            CellType.NUMERIC -> cell.numericCellValue.toString()
-            CellType.BOOLEAN -> cell.booleanCellValue.toString()
-            else -> ""
-        }
-
+        return cell?.toString() ?: ""
     }
-
 
 }

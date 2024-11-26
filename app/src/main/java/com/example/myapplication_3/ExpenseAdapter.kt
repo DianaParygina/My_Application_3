@@ -62,7 +62,7 @@ class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sha
     }
 
     private fun saveExpensesToSharedPrefs() {
-        val incomeStrings = expenseItems.map { "${it.expense },${ it.date},${it.type}" }
+        val incomeStrings = expenseItems.map { "${it.expense };${ it.date};${it.type}" }
         with(sharedPrefs.edit()) {
             putString("expenseList", incomeStrings.joinToString(";"))
             apply()

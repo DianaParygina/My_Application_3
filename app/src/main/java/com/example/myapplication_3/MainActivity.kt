@@ -2,13 +2,18 @@ package com.example.myapplication_3
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.view.MenuItem
+import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.PagerSnapHelper
+import com.example.music_app.fileTools.PDFGeneratorExpense
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -31,6 +36,32 @@ class MainActivity : BaseMenu() {
 
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = expenseAdapter
+
+
+        val buttonPdfExpense = findViewById<Button>(R.id.button_pdf_expense)
+        buttonPdfExpense.setOnClickListener {
+            val expenses = expenseAdapter.expenseItems // Получите список расходов из адаптера
+            Log.d("MainActivity", "Расходы перед генерацией PDF: $expenses")
+            PDFGeneratorExpense.generatePdf(this, expenses)
+            Log.d("MainActivity", "Расходы перед генерацией PDF: $expenses")
+            Toast.makeText(this, "PDF отчет по расходам создан", Toast.LENGTH_SHORT).show()
+        }
+
+        val buttonPdfExpenseOpen = findViewById<Button>(R.id.button_pdf_expense_open)
+        buttonPdfExpenseOpen.setOnClickListener {
+            val pdfPathExpense = PDFGeneratorExpense.getPdfFilePath(this)
+            if (pdfPathExpense != null) {
+                val uriExpense = FileProvider.getUriForFile(this, "${packageName}.provider", File(pdfPathExpense))
+                val intentExpense = Intent(Intent.ACTION_VIEW)
+                intentExpense.setDataAndType(uriExpense, "application/pdf")
+                intentExpense.flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                startActivity(Intent.createChooser(intentExpense, "Открыть PDF"))
+            }else {
+                Toast.makeText(this, "Ошибка: PDF файл не найден", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
 
         val snapHelper = PagerSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)
@@ -123,17 +154,22 @@ class MainActivity : BaseMenu() {
         // Загрузка списка расходов из SharedPreferences
         val expenseString = sharedPrefs.getString("expenseList", "")?.split(";")?:emptyList()
         val expenseItems = expenseString.mapNotNull {
-            val parts = it.split(",")
+            val parts = it.split(";")
             if (parts.size == 3) {
                 val expense = parts[0].toDoubleOrNull()
                 val date = parts[1]
                 val type = parts[2]
                 if (expense != null) ExpenseItem(expense, date, type) else null
-            } else null
+            } else {
+                Log.w("MainActivity", "Некорректная строка расходов: $it")
+                null
+            }
         }
 
         if (expenseItems.isNotEmpty()) {
-            expenseAdapter.expenseItems.removeAt(0)
+            expenseAdapter.expenseItems.clear() // Очистить перед добавлением
+        } else if (expenseAdapter.expenseItems.isEmpty()){
+            expenseAdapter.expenseItems.add(ExpenseItem(0.0, "", ""))
         }
 
         expenseAdapter.expenseItems.addAll(expenseItems)
