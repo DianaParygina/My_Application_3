@@ -1,15 +1,11 @@
-package com.example.music_app.fileTools
+package com.example.myapplication_3.expense
 
 import android.content.Context
 import android.os.Environment
-import android.util.Log
-import com.example.myapplication_3.ExpenseItem
 import com.itextpdf.text.*
 import com.itextpdf.text.pdf.PdfWriter
 import java.io.File
 import java.io.FileOutputStream
-import com.itextpdf.text.pdf.BaseFont
-import com.itextpdf.text.pdf.PdfContentByte
 
 object PDFGeneratorExpense {
 

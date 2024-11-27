@@ -1,11 +1,9 @@
-package com.example.myapplication_3
+package com.example.myapplication_3.income
 
 import android.app.AlertDialog
-import android.app.DatePickerDialog
 import android.content.SharedPreferences
 import android.view.ContextMenu
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
@@ -13,11 +11,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import com.example.myapplication_3.R
+import com.example.myapplication_3.SharedFinanceViewModel
 
-class IncomeAdapter(val incomeItems: MutableList<IncomeItem>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: IncomeActivity, private val sharedPrefs: SharedPreferences) : RecyclerView.Adapter<IncomeAdapter.ViewHolder>(){
+class IncomeAdapter(val incomeItems: MutableList<IncomeItem>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: IncomeActivity,) : RecyclerView.Adapter<IncomeAdapter.ViewHolder>(){
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
         val textViewIncome: TextView
@@ -64,26 +61,15 @@ class IncomeAdapter(val incomeItems: MutableList<IncomeItem>, private val shared
     fun addIncome(income: IncomeItem){
         incomeItems.add(0,income)
         notifyItemInserted(0)
-
-        saveIncomesToSharedPrefs()
-    }
-
-    private fun saveIncomesToSharedPrefs() {
-        val incomeStrings = incomeItems.map { "${it.amount },${ it.date},${it.type}" }
-        with(sharedPrefs.edit()) {
-            putString("incomeList", incomeStrings.joinToString(";"))
-            apply()
-        }
     }
 
 
     fun deleteIncome(position: Int) {
         val incomeItem = incomeItems[position]
         sharedFinanceViewModel.deleteIncome(incomeItem.amount)
+        BinFileHandler.deleteLineFromBin(incomeItem)
         incomeItems.removeAt(position)
         notifyItemRemoved(position)
-
-        saveIncomesToSharedPrefs()
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -133,11 +119,12 @@ class IncomeAdapter(val incomeItems: MutableList<IncomeItem>, private val shared
             if (newIncomeString.isNotEmpty()) {
                 val newIncome = newIncomeString.toDoubleOrNull()
                 if(newIncome!=null) {
-                        sharedFinanceViewModel.deleteIncome(currentIncomeItem.amount)
-                        sharedFinanceViewModel.addIncome(newIncome)
-                        incomeItems[position] = IncomeItem(newIncome, newDate, newType)
-                        notifyItemChanged(position)
-                        saveIncomesToSharedPrefs()
+                    val oldIncome = incomeItems[position]
+                    sharedFinanceViewModel.deleteIncome(oldIncome.amount)
+                    sharedFinanceViewModel.addIncome(newIncome)
+
+                    BinFileHandler.updateLineInBin(oldIncome, IncomeItem(newIncome, newDate, newType))
+                    notifyItemChanged(position)
                         showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
                       } else {
                     showToast("Введите корректное число")

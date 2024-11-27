@@ -1,11 +1,10 @@
-package com.example.myapplication_3
+package com.example.myapplication_3.income
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.MenuInflater
@@ -15,11 +14,13 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import androidx.lifecycle.SavedStateViewModelFactory
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication_3.BaseMenu
+import com.example.myapplication_3.MyApplication
+import com.example.myapplication_3.R
+import com.example.myapplication_3.SharedFinanceViewModel
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -30,20 +31,25 @@ class IncomeActivity : BaseMenu() {
     private lateinit var incomeAdapter: IncomeAdapter
     private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
     private lateinit var recyclerView: RecyclerView
-    val sharedPrefs by lazy { getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
     private var selectedPositionForContextMenu: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
+        registerForContextMenu(findViewById(android.R.id.content))
 
-        incomeAdapter = IncomeAdapter(mutableListOf(IncomeItem(0.0, "", "")), sharedFinanceViewModel, this, sharedPrefs)
+        sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
+        BinFileHandler.initialize(this, "incomes.bin")
+
+        incomeAdapter = IncomeAdapter(mutableListOf(), sharedFinanceViewModel, this)
         recyclerView = findViewById(R.id.recyclerView)
 
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = incomeAdapter
 
+        val incomeItems = BinFileHandler.loadDataFromBin() // Загружаем данные здесь
+        incomeAdapter.incomeItems.addAll(incomeItems)
+        incomeAdapter.notifyDataSetChanged()
 
         val buttonPdfIncome = findViewById<Button>(R.id.button_pdf_income)
         buttonPdfIncome.setOnClickListener {
@@ -141,10 +147,11 @@ class IncomeActivity : BaseMenu() {
                 val income = incomeString.toDoubleOrNull()
                 if (income != null) {
                     val incomeItem = IncomeItem(income, dateString, typeString)
+                    BinFileHandler.addLineToBin(incomeItem)
                     sharedFinanceViewModel.addIncome(income)
                     incomeAdapter.addIncome(incomeItem)
+                    incomeAdapter.notifyItemInserted(0)
 
-                    showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }
@@ -161,22 +168,9 @@ class IncomeActivity : BaseMenu() {
     override fun onResume() {
         super.onResume()
 
-        val incomeString = sharedPrefs.getString("incomeList", "")?.split(";")?:emptyList()
-        val incomeItems = incomeString.mapNotNull {
-            val parts = it.split(",")
-            if (parts.size == 3) {
-                val amount = parts[0].toDoubleOrNull()
-                val date = parts[1]
-                val type = parts[2]
-                if (amount != null) IncomeItem(amount, date, type) else null
-            } else null
-        }
-
-        if (incomeItems.isNotEmpty()) {
-            incomeAdapter.incomeItems.removeAt(0)
-        }
-
-        incomeAdapter.incomeItems.addAll(0,incomeItems)
+        val incomeItems = BinFileHandler.loadDataFromBin()
+        incomeAdapter.incomeItems.clear()
+        incomeAdapter.incomeItems.addAll(incomeItems)
         incomeAdapter.notifyDataSetChanged()
     }
 }

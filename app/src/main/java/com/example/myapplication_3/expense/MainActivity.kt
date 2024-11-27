@@ -1,4 +1,4 @@
-package com.example.myapplication_3
+package com.example.myapplication_3.expense
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
@@ -12,7 +12,10 @@ import androidx.recyclerview.widget.RecyclerView
 import android.view.MenuItem
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.PagerSnapHelper
-import com.example.music_app.fileTools.PDFGeneratorExpense
+import com.example.myapplication_3.BaseMenu
+import com.example.myapplication_3.MyApplication
+import com.example.myapplication_3.R
+import com.example.myapplication_3.SharedFinanceViewModel
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -30,6 +33,7 @@ class MainActivity : BaseMenu() {
         super.onCreate(savedInstanceState)
 
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
+
 
         expenseAdapter = ExpenseAdapter(mutableListOf(ExpenseItem(.0, "", "")), sharedFinanceViewModel, this, sharedPrefs)
         recyclerView = findViewById(R.id.recyclerView)

@@ -1,4 +1,4 @@
-package com.example.myapplication_3
+package com.example.myapplication_3.expense
 
 import android.app.AlertDialog
 import android.content.SharedPreferences
@@ -11,7 +11,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import kotlin.math.exp
+import com.example.myapplication_3.R
+import com.example.myapplication_3.SharedFinanceViewModel
 
 class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity, private val sharedPrefs: SharedPreferences) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
 
@@ -72,7 +73,7 @@ class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sha
 
     fun deleteExpense(position: Int) {
         val expenseItem = expenseItems[position]
-        sharedFinanceViewModel.deleteExpense(expenseItem.expense)
+        ExpenseRepository.deleteExpense(expenseItem)
         expenseItems.removeAt(position)
         notifyItemRemoved(position)
 
@@ -129,12 +130,12 @@ class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sha
             if (newExpenseString.isNotEmpty()) {
                 val newExpense = newExpenseString.toDoubleOrNull()
                 if (newExpense!= null) {
-                        sharedFinanceViewModel.deleteExpense(currentExpenseItem.expense)
+                    ExpenseRepository.deleteExpense(currentExpenseItem)
                         sharedFinanceViewModel.addExpense(newExpense)
                         expenseItems[position] = ExpenseItem(newExpense, newDate, newType)
                         notifyItemChanged(position)
                         saveExpensesToSharedPrefs()
-                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
+                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalBalance()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }

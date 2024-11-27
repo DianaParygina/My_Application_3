@@ -2,6 +2,7 @@ package com.example.myapplication_3
 
 import android.os.Bundle
 import android.widget.TextView
+import androidx.lifecycle.Observer
 
 class BalanceActivity: BaseMenu() {
 
@@ -16,6 +17,11 @@ class BalanceActivity: BaseMenu() {
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
         tvBalance.text = "Ваш баланс: ${sharedFinanceViewModel.getTotalBalance()} руб"
+
+        // Подписываемся на изменения баланса
+        sharedFinanceViewModel.totalBalance.observe(this, Observer { newBalance ->
+            tvBalance.text = "Ваш баланс: ${newBalance} руб"
+        })
 
         updateBottomNavigationView(R.id.listPicture)
     }

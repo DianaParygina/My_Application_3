@@ -3,6 +3,8 @@ package com.example.myapplication_3
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.example.myapplication_3.expense.MainActivity
+import com.example.myapplication_3.income.IncomeActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 abstract class BaseMenu : AppCompatActivity() {

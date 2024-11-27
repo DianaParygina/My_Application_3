@@ -1,9 +1,7 @@
-package com.example.myapplication_3.fileTools
+package com.example.myapplication_3.expense
 
 import android.content.Context
 import android.util.Log
-import com.example.myapplication_3.ExpenseItem
-import com.example.myapplication_3.IncomeItem
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.*
 import java.io.File
@@ -12,7 +10,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 object XLSFileHandler {
-//    private const val XLS_FILE_NAME = "expenses_data.xls" // Имя файла
     private var xlsFile: File? = null
     private var workbook: Workbook? = null
 
@@ -21,7 +18,7 @@ object XLSFileHandler {
         Log.d("XLSFileHandler", "XLS File Path: ${xlsFile?.absolutePath}")
         if (!xlsFile!!.exists()) {
             workbook = HSSFWorkbook()
-            val sheet = workbook!!.createSheet("Expenses") // Создаем начальный лист
+            val sheet = workbook!!.createSheet("Expenses")
 
             // Создаем строку заголовков
             val headerRow = sheet.createRow(0)
@@ -62,7 +59,7 @@ object XLSFileHandler {
         val sheet = workbook?.getSheetAt(0) ?: return emptyList()
         val expenses = mutableListOf<ExpenseItem>()
 
-        for (rowIndex in 1..sheet.lastRowNum) { // Начнем с 1, чтобы пропустить заголовок
+        for (rowIndex in 1..sheet.lastRowNum) {
             val row = sheet.getRow(rowIndex) ?: continue
             val expense = getCellValue(row.getCell(0)).toDoubleOrNull() ?: continue
             val date = getCellValue(row.getCell(1))
