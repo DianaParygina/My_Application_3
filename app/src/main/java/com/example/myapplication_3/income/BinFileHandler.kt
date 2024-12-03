@@ -31,7 +31,7 @@ object BinFileHandler {
                 incomes.add(IncomeItem(amount, date, type))
             }
         } catch (e: EOFException) {
-            // Достигнут конец файла, это нормально
+            // Достигнут конец файла
         } catch (e: IOException) {
             e.printStackTrace()
         } finally {

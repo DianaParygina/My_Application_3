@@ -85,7 +85,7 @@ object XLSFileHandler {
             CellType.BLANK -> ""
             CellType._NONE -> ""
             CellType.ERROR -> cell.errorCellValue.toString()
-            null -> "" // Обработка null значения ячейки
+            null -> ""
         }
     }
 
@@ -128,8 +128,8 @@ object XLSFileHandler {
                 if (rowIndex < sheet.lastRowNum) {
                     sheet.shiftRows(rowIndex + 1, sheet.lastRowNum + 1, -1)
                 }
-                saveWorkbook() // Сохраняем изменения
-                return // Выходим из функции после удаления строки
+                saveWorkbook()
+                return
             }
         }
     }

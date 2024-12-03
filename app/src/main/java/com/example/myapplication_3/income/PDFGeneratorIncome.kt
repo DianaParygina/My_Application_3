@@ -9,7 +9,7 @@ import java.io.FileOutputStream
 
 object PDFGeneratorIncome {
 
-    fun generatePdf(context: Context, incomes: List<IncomeItem>) { // Исправлено имя параметра
+    fun generatePdf(context: Context, incomes: List<IncomeItem>) {
         try {
             val pdfDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "incomes")
             if (!pdfDirectory.exists()) {
@@ -23,19 +23,19 @@ object PDFGeneratorIncome {
 
             document.open()
 
-            val titleFont = Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD) // Жирный шрифт для заголовка
-            document.add(Phrase("List income\n", titleFont)) // Русский заголовок
+            val titleFont = Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD)
+            document.add(Phrase("List income\n", titleFont))
             document.add(Chunk.NEWLINE)
 
 
-            for (income in incomes) { // Исправлено имя переменной и цикл
-                document.add(Phrase("Income: ${income.amount}\nDate: ${income.date}\nType: ${income.type}\n")) // Русские названия полей
+            for (income in incomes) {
+                document.add(Phrase("Income: ${income.amount}\nDate: ${income.date}\nType: ${income.type}\n"))
                 document.add(Chunk.NEWLINE)
             }
 
             document.close()
 
-            println("PDF File saved at: ${pdfFile.absolutePath}")
+//            println("PDF File saved at: ${pdfFile.absolutePath}")
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -44,8 +44,8 @@ object PDFGeneratorIncome {
 
 
     fun getPdfFilePath(context: Context): String? { // Возвращаем null, если файл не существует
-        val pdfDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "incomes") // Исправлено имя директории
-        val pdfFile = File(pdfDirectory, "income_list.pdf") // Исправлено имя файла
+        val pdfDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "incomes")
+        val pdfFile = File(pdfDirectory, "income_list.pdf")
         return if (pdfFile.exists()) pdfFile.absolutePath else null
     }
 

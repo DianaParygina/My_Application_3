@@ -9,7 +9,7 @@ import java.io.FileOutputStream
 
 object PDFGeneratorExpense {
 
-    fun generatePdf(context: Context, expenses: List<ExpenseItem>) { // Исправлено имя параметра
+    fun generatePdf(context: Context, expenses: List<ExpenseItem>) {
         try {
             val pdfDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "expenses")
             if (!pdfDirectory.exists()) {
@@ -23,13 +23,13 @@ object PDFGeneratorExpense {
 
             document.open()
 
-            val titleFont = Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD) // Жирный шрифт для заголовка
-            document.add(Phrase("List expens\n", titleFont)) // Русский заголовок
+            val titleFont = Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD)
+            document.add(Phrase("List expens\n", titleFont))
             document.add(Chunk.NEWLINE)
 
 
-            for (expense in expenses) { // Исправлено имя переменной и цикл
-                document.add(Phrase("Expense: ${expense.expense}\nDate: ${expense.date}\nType: ${expense.type}\n")) // Русские названия полей
+            for (expense in expenses) {
+                document.add(Phrase("Expense: ${expense.expense}\nDate: ${expense.date}\nType: ${expense.type}\n"))
                 document.add(Chunk.NEWLINE)
             }
 
@@ -38,14 +38,14 @@ object PDFGeneratorExpense {
             println("PDF File saved at: ${pdfFile.absolutePath}")
 
         } catch (e: Exception) {
-            e.printStackTrace() //  Лучше использовать логирование: Log.e("PDFGenerator", "Ошибка генерации PDF", e)
+            e.printStackTrace()
         }
     }
 
 
     fun getPdfFilePath(context: Context): String? { // Возвращаем null, если файл не существует
-        val pdfDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "expenses") // Исправлено имя директории
-        val pdfFile = File(pdfDirectory, "expense_list.pdf") // Исправлено имя файла
+        val pdfDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "expenses")
+        val pdfFile = File(pdfDirectory, "expense_list.pdf")
         return if (pdfFile.exists()) pdfFile.absolutePath else null
     }
 }

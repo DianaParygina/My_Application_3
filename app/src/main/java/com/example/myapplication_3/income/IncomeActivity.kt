@@ -47,7 +47,7 @@ class IncomeActivity : BaseMenu() {
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = incomeAdapter
 
-        val incomeItems = BinFileHandler.loadDataFromBin() // Загружаем данные здесь
+        val incomeItems = BinFileHandler.loadDataFromBin()
         incomeAdapter.incomeItems.addAll(incomeItems)
         incomeAdapter.notifyDataSetChanged()
 
