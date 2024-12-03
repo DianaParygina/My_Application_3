@@ -152,7 +152,7 @@ class IncomeActivity : BaseMenu() {
                     incomeAdapter.incomeItems.add(0,incomeItem)
                     incomeAdapter.notifyItemInserted(0)
 
-//                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalIncome()} руб")
+                    showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }

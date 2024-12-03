@@ -128,7 +128,7 @@ class IncomeAdapter(val incomeItems: MutableList<IncomeItem>, private val shared
 
                     incomeItems[position] = newIncomeItem
                     notifyItemChanged(position)
-//                        showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
+                    showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
                       } else {
                     showToast("Введите корректное число")
                 }

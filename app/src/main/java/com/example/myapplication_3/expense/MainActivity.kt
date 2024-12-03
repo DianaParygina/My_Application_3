@@ -37,8 +37,11 @@ class MainActivity : BaseMenu() {
 
         registerForContextMenu(findViewById(android.R.id.content))
 
-        expenseAdapter = ExpenseAdapter(mutableListOf(ExpenseItem(.0, "", "")), sharedFinanceViewModel, this)
+        expenseAdapter = ExpenseAdapter(mutableListOf(), sharedFinanceViewModel, this)
         recyclerView = findViewById(R.id.recyclerView)
+
+        expenseAdapter.expenseItems.addAll(XLSFileHandler.loadDataFromXLS())
+        expenseAdapter.notifyDataSetChanged()
 
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = expenseAdapter
@@ -47,9 +50,7 @@ class MainActivity : BaseMenu() {
         val buttonPdfExpense = findViewById<Button>(R.id.button_pdf_expense)
         buttonPdfExpense.setOnClickListener {
             val expenses = expenseAdapter.expenseItems // Получите список расходов из адаптера
-            Log.d("MainActivity", "Расходы перед генерацией PDF: $expenses")
             PDFGeneratorExpense.generatePdf(this, expenses)
-            Log.d("MainActivity", "Расходы перед генерацией PDF: $expenses")
             Toast.makeText(this, "PDF отчет по расходам создан", Toast.LENGTH_SHORT).show()
         }
 
@@ -138,12 +139,15 @@ class MainActivity : BaseMenu() {
                 val expense = expenseString.toDoubleOrNull()
                 if (expense != null) {
                     val expenseItem = ExpenseItem(expense, dateString, typeString)
-                    XLSFileHandler.addLineToXLS(expenseItem)
-                    sharedFinanceViewModel.addExpense(expense)
                     expenseAdapter.addExpense(expenseItem)
                     expenseAdapter.notifyItemInserted(0)
 
-//                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
+
+
+                    XLSFileHandler.addLineToXLS(expenseItem)
+                    sharedFinanceViewModel.addExpense(expense)
+
+                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }
@@ -158,10 +162,19 @@ class MainActivity : BaseMenu() {
 
     override fun onResume() {
         super.onResume()
-
-        val expenseItems = XLSFileHandler.loadDataFromXLS()
-        expenseAdapter.expenseItems.clear()
-        expenseAdapter.expenseItems.addAll(expenseItems)
+        expenseAdapter.expenseItems.clear() // Очищаем список перед загрузкой
+        val expenseItemsFromFile = XLSFileHandler.loadDataFromXLS()
+        expenseAdapter.expenseItems.addAll(expenseItemsFromFile)
         expenseAdapter.notifyDataSetChanged()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        val dataToStore = expenseAdapter.expenseItems.map { expenseItem ->
+            "${expenseItem.expense},${expenseItem.date},${expenseItem.type}"
+        }
+
+        XLSFileHandler.saveDataToXLS(dataToStore)
     }
 }

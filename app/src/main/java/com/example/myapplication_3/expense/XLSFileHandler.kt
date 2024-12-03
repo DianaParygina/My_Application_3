@@ -2,8 +2,10 @@ package com.example.myapplication_3.expense
 
 import android.content.Context
 import android.util.Log
+import com.example.myapplication_3.income.IncomeItem
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.*
+import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -59,8 +61,11 @@ object XLSFileHandler {
         val sheet = workbook?.getSheetAt(0) ?: return emptyList()
         val expenses = mutableListOf<ExpenseItem>()
 
+        // Начинаем с 1, чтобы пропустить строку заголовка
         for (rowIndex in 1..sheet.lastRowNum) {
             val row = sheet.getRow(rowIndex) ?: continue
+
+            // Извлекаем значения из ячеек, обрабатывая null и конвертируя типы
             val expense = getCellValue(row.getCell(0)).toDoubleOrNull() ?: continue
             val date = getCellValue(row.getCell(1))
             val type = getCellValue(row.getCell(2))
@@ -68,6 +73,20 @@ object XLSFileHandler {
             expenses.add(ExpenseItem(expense, date, type))
         }
         return expenses
+    }
+
+    private fun getCellValue(cell: Cell?): String {
+        // Более надежная обработка значений ячеек
+        return when (cell?.cellType) {
+            CellType.NUMERIC -> cell.numericCellValue.toString()
+            CellType.STRING -> cell.stringCellValue
+            CellType.BOOLEAN -> cell.booleanCellValue.toString()
+            CellType.FORMULA -> cell.cellFormula
+            CellType.BLANK -> ""
+            CellType._NONE -> ""
+            CellType.ERROR -> cell.errorCellValue.toString()
+            null -> "" // Обработка null значения ячейки
+        }
     }
 
     fun addLineToXLS(expenseItem: ExpenseItem) {
@@ -79,75 +98,67 @@ object XLSFileHandler {
         saveWorkbook()
     }
 
-    fun updateLineInXLS(oldLine: String, newLine: String) {
+    fun updateLineInXLS(position: Int, newLine: ExpenseItem) {
         val sheet = workbook?.getSheetAt(0) ?: return
-        for (row in sheet) {
-            val cell = row.getCell(0)
-            if (cell?.stringCellValue == oldLine) {
-                val parts = newLine.split(",")
-                parts.forEachIndexed { colIndex, part ->
-                    val newCell = row.createCell(colIndex)
-                    newCell.setCellValue(part)
+        val row = sheet.getRow(position + 1) ?: return
+
+        row.getCell(0)?.setCellValue(newLine.expense)
+        row.getCell(1)?.setCellValue(newLine.date)
+        row.getCell(2)?.setCellValue(newLine.type)
+
+        saveWorkbook()
+    }
+
+    fun deleteLineFromXLS(expenseItem: ExpenseItem) {
+        val sheet = workbook?.getSheetAt(0) ?: return
+
+        if (sheet.physicalNumberOfRows == 0) return // Проверка на пустой лист
+
+        for (rowIndex in 1..sheet.lastRowNum) { // Итерация по строкам, начиная с 1, пропуская заголовок
+            val row = sheet.getRow(rowIndex) ?: continue // Пропустить пустую строку
+
+            val expense = getCellValue(row.getCell(0)).toDoubleOrNull()
+            val date = getCellValue(row.getCell(1))
+            val type = getCellValue(row.getCell(2))
+
+            if (expense == expenseItem.expense && date == expenseItem.date && type == expenseItem.type) {
+                sheet.removeRow(row) // Удаляем найденную строку
+
+                // Сдвигаем строки вверх, чтобы заполнить пробел
+                if (rowIndex < sheet.lastRowNum) {
+                    sheet.shiftRows(rowIndex + 1, sheet.lastRowNum + 1, -1)
                 }
-                saveWorkbook()
-                return
+                saveWorkbook() // Сохраняем изменения
+                return // Выходим из функции после удаления строки
             }
         }
     }
 
-    fun deleteLineFromXLS(line: String) {
+    fun saveDataToXLS(data: List<String>) {
         val sheet = workbook?.getSheetAt(0) ?: return
 
-        if (sheet.physicalNumberOfRows == 0) {
-            return
-        }
-
-        val rowIndex = sheet.iterator().asSequence().toList()
-            .indexOfFirst { it.getCell(0)?.stringCellValue == line }
-
-        if (rowIndex >= 0) {
-            sheet.removeRow(sheet.getRow(rowIndex)) // Удаляем строку напрямую
-
-            // Сдвигаем оставшиеся строки вверх
-            if (rowIndex < sheet.lastRowNum) {
-                sheet.shiftRows(rowIndex + 1, sheet.lastRowNum, -1)
+        // Удаляем все строки кроме заголовка
+        val lastRowNum = sheet.lastRowNum
+        if (lastRowNum > 0) {
+            for (i in lastRowNum downTo 1) {
+                val row = sheet.getRow(i)
+                if (row != null) {
+                    sheet.removeRow(row)
+                }
             }
+        }
 
-            // Удаляем последнюю строку, если она пустая после сдвига
-            val lastRow = sheet.getRow(sheet.lastRowNum)
-            if (lastRow == null || lastRow.physicalNumberOfCells == 0) {
-                sheet.removeRow(lastRow)
+        // Записываем новые данные
+        data.forEachIndexed { index, line ->
+            val row = sheet.createRow(index + 1)  // Индекс с 1, чтобы не перезаписать заголовок
+            val parts = line.split(",")
+            parts.forEachIndexed { colIndex, part ->
+                val cell = row.createCell(colIndex)
+                cell.setCellValue(part)
             }
-
-            saveWorkbook()
         }
-    }
 
-    private fun copyRowData(sourceRow: Row?, destinationRow: Row) {
-        if (sourceRow == null) return
-        for (cellIndex in 0 until sourceRow.physicalNumberOfCells) {
-            val sourceCell = sourceRow.getCell(cellIndex)
-            val destinationCell = destinationRow.createCell(cellIndex)
-            copyCellValue(sourceCell, destinationCell)
-        }
-    }
-
-
-    private fun copyCellValue(source: Cell?, destination: Cell) {
-        if (source == null) return
-        when (source.cellType) {
-            CellType.STRING -> destination.setCellValue(source.stringCellValue)
-            CellType.NUMERIC -> destination.setCellValue(source.numericCellValue)
-            CellType.BOOLEAN -> destination.setCellValue(source.booleanCellValue)
-            else -> destination.setCellValue("") // Для других типов данных
-        }
-    }
-
-
-
-
-    private fun getCellValue(cell: Cell?): String {
-        return cell?.toString() ?: ""
+        saveWorkbook()
     }
 
 }

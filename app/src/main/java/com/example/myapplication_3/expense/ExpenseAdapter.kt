@@ -2,6 +2,7 @@ package com.example.myapplication_3.expense
 
 import android.app.AlertDialog
 import android.content.SharedPreferences
+import android.util.Log
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
@@ -58,16 +59,15 @@ class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sha
 
     fun addExpense(expense: ExpenseItem) {
         expenseItems.add(0, expense)
-        notifyItemInserted(0)
     }
 
 
     fun deleteExpense(position: Int) {
         val expenseItem = expenseItems[position]
         sharedFinanceViewModel.deleteExpense(expenseItem.expense)
-        XLSFileHandler.deleteLineFromXLS(expenseItem.toString())
-        notifyItemRemoved(position)
+        XLSFileHandler.deleteLineFromXLS(expenseItem)
         expenseItems.removeAt(position)
+        notifyItemRemoved(position)
     }
 
 
@@ -122,11 +122,16 @@ class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sha
             if (newExpenseString.isNotEmpty()) {
                 val newExpense = newExpenseString.toDoubleOrNull()
                 if (newExpense!= null) {
-//                        ExpenseRepository.deleteExpense(currentExpenseItem)
-                        sharedFinanceViewModel.addExpense(newExpense)
-                        expenseItems[position] = ExpenseItem(newExpense, newDate, newType)
-                        notifyItemChanged(position)
-                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalBalance()} руб")
+                    val oldExpense = expenseItems[position]
+                    val newExpenses = ExpenseItem(newExpense, newDate, newType)
+                    sharedFinanceViewModel.deleteExpense(oldExpense.expense)
+                    sharedFinanceViewModel.addExpense(newExpense)
+
+                    XLSFileHandler.updateLineInXLS(position, newExpenses)
+
+                    expenseItems[position] = newExpenses
+                    notifyItemChanged(position)
+                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }

@@ -94,7 +94,7 @@ object BinFileHandler {
 
     fun saveDataToBin(incomes: List<IncomeItem>) {
         try {
-            dataOutputStream = DataOutputStream(FileOutputStream(binFile, false)) // false для перезаписи файла
+            dataOutputStream = DataOutputStream(FileOutputStream(binFile, false))
             for (incomeItem in incomes) {
                 dataOutputStream!!.writeDouble(incomeItem.amount)
                 dataOutputStream!!.writeUTF(incomeItem.date)
