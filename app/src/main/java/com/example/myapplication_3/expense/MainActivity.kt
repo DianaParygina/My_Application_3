@@ -16,6 +16,8 @@ import com.example.myapplication_3.BaseMenu
 import com.example.myapplication_3.MyApplication
 import com.example.myapplication_3.R
 import com.example.myapplication_3.SharedFinanceViewModel
+import com.example.myapplication_3.income.BinFileHandler
+import com.example.myapplication_3.income.IncomeItem
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -26,7 +28,6 @@ class MainActivity : BaseMenu() {
     private lateinit var expenseAdapter: ExpenseAdapter
     private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
     private lateinit var recyclerView: RecyclerView
-    val sharedPrefs by lazy { getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
     private var selectedPositionForContextMenu: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,8 +35,9 @@ class MainActivity : BaseMenu() {
 
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
+        registerForContextMenu(findViewById(android.R.id.content))
 
-        expenseAdapter = ExpenseAdapter(mutableListOf(ExpenseItem(.0, "", "")), sharedFinanceViewModel, this, sharedPrefs)
+        expenseAdapter = ExpenseAdapter(mutableListOf(ExpenseItem(.0, "", "")), sharedFinanceViewModel, this)
         recyclerView = findViewById(R.id.recyclerView)
 
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -136,10 +138,12 @@ class MainActivity : BaseMenu() {
                 val expense = expenseString.toDoubleOrNull()
                 if (expense != null) {
                     val expenseItem = ExpenseItem(expense, dateString, typeString)
+                    XLSFileHandler.addLineToXLS(expenseItem)
                     sharedFinanceViewModel.addExpense(expense)
                     expenseAdapter.addExpense(expenseItem)
+                    expenseAdapter.notifyItemInserted(0)
 
-                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
+//                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalExpense()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }
@@ -155,27 +159,8 @@ class MainActivity : BaseMenu() {
     override fun onResume() {
         super.onResume()
 
-        // Загрузка списка расходов из SharedPreferences
-        val expenseString = sharedPrefs.getString("expenseList", "")?.split(";")?:emptyList()
-        val expenseItems = expenseString.mapNotNull {
-            val parts = it.split(";")
-            if (parts.size == 3) {
-                val expense = parts[0].toDoubleOrNull()
-                val date = parts[1]
-                val type = parts[2]
-                if (expense != null) ExpenseItem(expense, date, type) else null
-            } else {
-                Log.w("MainActivity", "Некорректная строка расходов: $it")
-                null
-            }
-        }
-
-        if (expenseItems.isNotEmpty()) {
-            expenseAdapter.expenseItems.clear() // Очистить перед добавлением
-        } else if (expenseAdapter.expenseItems.isEmpty()){
-            expenseAdapter.expenseItems.add(ExpenseItem(0.0, "", ""))
-        }
-
+        val expenseItems = XLSFileHandler.loadDataFromXLS()
+        expenseAdapter.expenseItems.clear()
         expenseAdapter.expenseItems.addAll(expenseItems)
         expenseAdapter.notifyDataSetChanged()
     }

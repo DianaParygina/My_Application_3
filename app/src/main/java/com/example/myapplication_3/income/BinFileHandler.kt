@@ -91,4 +91,21 @@ object BinFileHandler {
     }
 
 
+
+    fun saveDataToBin(incomes: List<IncomeItem>) {
+        try {
+            dataOutputStream = DataOutputStream(FileOutputStream(binFile, false)) // false для перезаписи файла
+            for (incomeItem in incomes) {
+                dataOutputStream!!.writeDouble(incomeItem.amount)
+                dataOutputStream!!.writeUTF(incomeItem.date)
+                dataOutputStream!!.writeUTF(incomeItem.type)
+            }
+            dataOutputStream!!.flush()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } finally {
+            dataOutputStream?.close()
+        }
+    }
+
 }

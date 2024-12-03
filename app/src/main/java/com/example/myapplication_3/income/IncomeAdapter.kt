@@ -120,12 +120,15 @@ class IncomeAdapter(val incomeItems: MutableList<IncomeItem>, private val shared
                 val newIncome = newIncomeString.toDoubleOrNull()
                 if(newIncome!=null) {
                     val oldIncome = incomeItems[position]
+                    val newIncomeItem = IncomeItem(newIncome, newDate, newType)
                     sharedFinanceViewModel.deleteIncome(oldIncome.amount)
                     sharedFinanceViewModel.addIncome(newIncome)
 
-                    BinFileHandler.updateLineInBin(oldIncome, IncomeItem(newIncome, newDate, newType))
+                    BinFileHandler.updateLineInBin(oldIncome, newIncomeItem)
+
+                    incomeItems[position] = newIncomeItem
                     notifyItemChanged(position)
-                        showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
+//                        showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
                       } else {
                     showToast("Введите корректное число")
                 }

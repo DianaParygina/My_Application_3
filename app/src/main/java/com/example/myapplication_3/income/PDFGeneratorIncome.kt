@@ -24,12 +24,12 @@ object PDFGeneratorIncome {
             document.open()
 
             val titleFont = Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD) // Жирный шрифт для заголовка
-            document.add(Phrase("Список Доходов", titleFont)) // Русский заголовок
+            document.add(Phrase("List income\n", titleFont)) // Русский заголовок
             document.add(Chunk.NEWLINE)
 
 
             for (income in incomes) { // Исправлено имя переменной и цикл
-                document.add(Phrase("Сумма: ${income.amount}\nДата: ${income.date}\nТип: ${income.type}\n")) // Русские названия полей
+                document.add(Phrase("Income: ${income.amount}\nDate: ${income.date}\nType: ${income.type}\n")) // Русские названия полей
                 document.add(Chunk.NEWLINE)
             }
 

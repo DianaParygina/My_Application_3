@@ -13,8 +13,9 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication_3.R
 import com.example.myapplication_3.SharedFinanceViewModel
+import com.example.myapplication_3.income.BinFileHandler
 
-class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity, private val sharedPrefs: SharedPreferences) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
+class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sharedFinanceViewModel: SharedFinanceViewModel, private val activity: MainActivity) : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>(){
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
         val textViewExpense: TextView
@@ -58,27 +59,18 @@ class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sha
     fun addExpense(expense: ExpenseItem) {
         expenseItems.add(0, expense)
         notifyItemInserted(0)
-
-        saveExpensesToSharedPrefs()
-    }
-
-    private fun saveExpensesToSharedPrefs() {
-        val incomeStrings = expenseItems.map { "${it.expense };${ it.date};${it.type}" }
-        with(sharedPrefs.edit()) {
-            putString("expenseList", incomeStrings.joinToString(";"))
-            apply()
-        }
     }
 
 
     fun deleteExpense(position: Int) {
         val expenseItem = expenseItems[position]
-        ExpenseRepository.deleteExpense(expenseItem)
-        expenseItems.removeAt(position)
+        sharedFinanceViewModel.deleteExpense(expenseItem.expense)
+        XLSFileHandler.deleteLineFromXLS(expenseItem.toString())
         notifyItemRemoved(position)
-
-        saveExpensesToSharedPrefs()
+        expenseItems.removeAt(position)
     }
+
+
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
@@ -130,11 +122,10 @@ class ExpenseAdapter(val expenseItems: MutableList<ExpenseItem>, private val sha
             if (newExpenseString.isNotEmpty()) {
                 val newExpense = newExpenseString.toDoubleOrNull()
                 if (newExpense!= null) {
-                    ExpenseRepository.deleteExpense(currentExpenseItem)
+//                        ExpenseRepository.deleteExpense(currentExpenseItem)
                         sharedFinanceViewModel.addExpense(newExpense)
                         expenseItems[position] = ExpenseItem(newExpense, newDate, newType)
                         notifyItemChanged(position)
-                        saveExpensesToSharedPrefs()
                     showToast("Ваш расход ${sharedFinanceViewModel.getTotalBalance()} руб")
                 } else {
                     showToast("Введите корректное число")

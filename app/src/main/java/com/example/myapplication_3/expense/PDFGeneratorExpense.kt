@@ -24,7 +24,7 @@ object PDFGeneratorExpense {
             document.open()
 
             val titleFont = Font(Font.FontFamily.HELVETICA, 16f, Font.BOLD) // Жирный шрифт для заголовка
-            document.add(Phrase("Список Расходов", titleFont)) // Русский заголовок
+            document.add(Phrase("List expens\n", titleFont)) // Русский заголовок
             document.add(Chunk.NEWLINE)
 
 

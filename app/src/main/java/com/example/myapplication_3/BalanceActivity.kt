@@ -16,7 +16,7 @@ class BalanceActivity: BaseMenu() {
 
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
 
-        tvBalance.text = "Ваш баланс: ${sharedFinanceViewModel.getTotalBalance()} руб"
+//        tvBalance.text = "Ваш баланс: ${sharedFinanceViewModel.getTotalBalance()} руб"
 
         // Подписываемся на изменения баланса
         sharedFinanceViewModel.totalBalance.observe(this, Observer { newBalance ->

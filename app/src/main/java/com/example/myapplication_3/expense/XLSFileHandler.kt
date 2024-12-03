@@ -97,6 +97,11 @@ object XLSFileHandler {
 
     fun deleteLineFromXLS(line: String) {
         val sheet = workbook?.getSheetAt(0) ?: return
+
+        if (sheet.physicalNumberOfRows == 0) {
+            return
+        }
+
         val rowIndex = sheet.iterator().asSequence().toList()
             .indexOfFirst { it.getCell(0)?.stringCellValue == line }
 

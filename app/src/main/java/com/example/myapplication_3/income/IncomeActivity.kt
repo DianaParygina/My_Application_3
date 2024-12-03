@@ -149,9 +149,10 @@ class IncomeActivity : BaseMenu() {
                     val incomeItem = IncomeItem(income, dateString, typeString)
                     BinFileHandler.addLineToBin(incomeItem)
                     sharedFinanceViewModel.addIncome(income)
-                    incomeAdapter.addIncome(incomeItem)
+                    incomeAdapter.incomeItems.add(0,incomeItem)
                     incomeAdapter.notifyItemInserted(0)
 
+//                    showToast("Ваш расход ${sharedFinanceViewModel.getTotalIncome()} руб")
                 } else {
                     showToast("Введите корректное число")
                 }
@@ -168,9 +169,13 @@ class IncomeActivity : BaseMenu() {
     override fun onResume() {
         super.onResume()
 
-        val incomeItems = BinFileHandler.loadDataFromBin()
         incomeAdapter.incomeItems.clear()
-        incomeAdapter.incomeItems.addAll(incomeItems)
+        incomeAdapter.incomeItems.addAll(BinFileHandler.loadDataFromBin())
         incomeAdapter.notifyDataSetChanged()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        BinFileHandler.saveDataToBin(incomeAdapter.incomeItems)
     }
 }
