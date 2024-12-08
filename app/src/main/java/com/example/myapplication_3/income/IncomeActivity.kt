@@ -194,10 +194,7 @@ class IncomeActivity : BaseMenu() {
                         if (newIncomeId != -1L) {
                             val newIncome = dbHelper.getIncomeById(newIncomeId)
                             if (newIncome != null) {
-                                incomeAdapter.incomeItems.add(
-                                    0,
-                                    IncomeItem(newIncome.amount, newIncome.date, newIncome.typeId.toString())
-                                )
+                                incomeAdapter.incomeItems.add(0, IncomeItem(newIncome.amount, newIncome.date, newIncome.typeId.toString()))
                                 incomeAdapter.notifyItemInserted(0)
                                 showToast("Доход добавлен в базу данных") // Уведомление об успешном добавлении
                             } else {

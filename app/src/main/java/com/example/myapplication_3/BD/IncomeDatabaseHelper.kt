@@ -104,7 +104,7 @@ class IncomeDatabaseHelper(context: Context): SQLiteOpenHelper(context, "finance
             null,
             null,
             null,
-            null
+            "$COL_INCOME_DATE DESC"
         )
 
 
