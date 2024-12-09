@@ -20,15 +20,21 @@ object BinFileHandler {
         }
     }
 
-    fun loadDataFromBin(): List<IncomeItem> {
-        val incomes = mutableListOf<IncomeItem>()
+    fun loadDataFromBin(): List<Income> {
+        val incomes = mutableListOf<Income>()
         try {
             dataInputStream = DataInputStream(FileInputStream(binFile))
             while (dataInputStream!!.available() > 0) {
                 val amount = dataInputStream!!.readDouble()
                 val date = dataInputStream!!.readUTF()
                 val type = dataInputStream!!.readUTF()
-                incomes.add(IncomeItem(amount, date, type))
+                val income = Income(
+                    null, // id = null для бинарных файлов
+                    amount,
+                    date,
+                    type
+                )
+                incomes.add(income)
             }
         } catch (e: EOFException) {
             // Достигнут конец файла
@@ -41,7 +47,7 @@ object BinFileHandler {
     }
 
 
-    fun addLineToBin(incomeItem: IncomeItem) {
+    fun addLineToBin(incomeItem: Income) {
         try {
             dataOutputStream = DataOutputStream(FileOutputStream(binFile, true)) // true для добавления в конец файла
             dataOutputStream!!.writeDouble(incomeItem.amount)
@@ -55,7 +61,7 @@ object BinFileHandler {
         }
     }
 
-    fun deleteLineFromBin(incomeItem: IncomeItem) {
+    fun deleteLineFromBin(incomeItem: Income) {
 
         val tempFile = File(binFile!!.absolutePath + ".tmp")
         try {
@@ -85,14 +91,14 @@ object BinFileHandler {
     }
 
 
-    fun updateLineInBin(oldIncome: IncomeItem, newIncome: IncomeItem) {
+    fun updateLineInBin(oldIncome: Income, newIncome: Income) {
         deleteLineFromBin(oldIncome)
         addLineToBin(newIncome)
     }
 
 
 
-    fun saveDataToBin(incomes: List<IncomeItem>) {
+    fun saveDataToBin(incomes: List<Income>) {
         try {
             dataOutputStream = DataOutputStream(FileOutputStream(binFile, false))
             for (incomeItem in incomes) {

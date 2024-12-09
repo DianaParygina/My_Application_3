@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.example.myapplication_3.income.Income
-import com.example.myapplication_3.income.IncomeItem
 
 class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 3) {
 
@@ -66,7 +65,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
         with(cursor) {
             while (moveToNext()) {
                 val income = Income(
-                    getInt(getColumnIndexOrThrow(COL_INCOME_ID)),
+                    getLong(getColumnIndexOrThrow(COL_INCOME_ID)),
                     getDouble(getColumnIndexOrThrow(COL_INCOME_AMOUNT)),
                     getString(getColumnIndexOrThrow(COL_INCOME_DATE)),
                     getString(getColumnIndexOrThrow(COL_INCOME_TYPE))
@@ -80,7 +79,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
         return incomes
     }
 
-    fun updateIncome(income: IncomeItem, incomeId: Long) {
+    fun updateIncome(income: Income, incomeId: Long) {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COL_INCOME_AMOUNT, income.amount)
@@ -113,7 +112,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
         with(cursor) {
             if (moveToFirst()) {
                 income = Income(
-                    getInt(getColumnIndexOrThrow(COL_INCOME_ID)),
+                    getLong(getColumnIndexOrThrow(COL_INCOME_ID)),
                     getDouble(getColumnIndexOrThrow(COL_INCOME_AMOUNT)),
                     getString(getColumnIndexOrThrow(COL_INCOME_DATE)),
                     getString(getColumnIndexOrThrow(COL_INCOME_TYPE))

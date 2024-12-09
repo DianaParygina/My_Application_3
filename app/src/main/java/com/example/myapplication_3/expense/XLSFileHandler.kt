@@ -2,7 +2,6 @@ package com.example.myapplication_3.expense
 
 import android.content.Context
 import android.util.Log
-import com.example.myapplication_3.income.IncomeItem
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.*
 import java.io.DataOutputStream

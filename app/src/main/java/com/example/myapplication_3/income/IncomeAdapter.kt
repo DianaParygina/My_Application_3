@@ -1,6 +1,7 @@
 package com.example.myapplication_3.income
 
 import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
@@ -13,11 +14,17 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication_3.R
 import com.example.myapplication_3.SharedFinanceViewModel
 import com.example.myapplication_3.BD.IncomeDatabaseHelper
+import com.example.myapplication_3.income.BinFileHandler.addLineToBin
+import com.example.myapplication_3.income.BinFileHandler.deleteLineFromBin
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class IncomeAdapter(
-    val incomeItems: MutableList<IncomeItem>,
+    val incomes: MutableList<Income>,
     private val sharedFinanceViewModel: SharedFinanceViewModel,
-    private val activity: IncomeActivity
+    private val activity: IncomeActivity,
+    private val dbHelper: IncomeDatabaseHelper
 ) : RecyclerView.Adapter<IncomeAdapter.ViewHolder>() {
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view), View.OnCreateContextMenuListener {
@@ -41,7 +48,7 @@ class IncomeAdapter(
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        val incomeItem = incomeItems[position]
+        val incomeItem = incomes[position]
         viewHolder.textViewIncome.text = incomeItem.amount.toString()
         viewHolder.textViewData.text = incomeItem.date
         viewHolder.textViewType.text = incomeItem.type
@@ -52,29 +59,49 @@ class IncomeAdapter(
         }
     }
 
-    override fun getItemCount() = incomeItems.size
+    override fun getItemCount() = incomes.size
 
-    fun addIncome(income: IncomeItem) {
-        incomeItems.add(0, income)
+    fun addIncome(income: Income) { // Принимает Income
+        if (activity.useSql) {
+            val newId = activity.dbHelper.insertIncome(income.amount, income.date, income.type)
+            incomes.add(0, income.copy(id = newId)) // Копируем с новым id
+        } else {
+            BinFileHandler.addLineToBin(income)
+            incomes.add(0, income)
+        }
         notifyItemInserted(0)
     }
 
     fun deleteIncome(position: Int) {
-        val incomeItem = incomeItems[position]
+        val income = incomes[position]
+        val amountToDelete = income.amount // !!! Сохраняем сумму для удаления
 
-        // Удаляем из базы данных
         if (activity.useSql) {
-            // Получаем ID дохода для удаления
-            val incomeId = incomeItem.amount.toLong() // Здесь нужно использовать правильный ID
-            activity.dbHelper.deleteIncome(incomeId)
+            income.id?.let {
+                activity.dbHelper.deleteIncome(it)
+                sharedFinanceViewModel.deleteIncome(amountToDelete) // !!! Вызываем после удаления из БД
+            }
         } else {
-            BinFileHandler.deleteLineFromBin(incomeItem)
+            BinFileHandler.deleteLineFromBin(income)
+            sharedFinanceViewModel.deleteIncome(amountToDelete) // !!! Вызываем после удаления из файла
         }
 
-        // Удаляем из адаптера
-        incomeItems.removeAt(position)
+        incomes.removeAt(position)
         notifyItemRemoved(position)
     }
+
+
+    fun updateIncome(position: Int, updatedIncome: Income) {
+        if (activity.useSql) {
+            updatedIncome.id?.let { activity.dbHelper.updateIncome(updatedIncome, it) }
+        } else {
+            val oldIncome = incomes[position] // Получаем старый доход
+            BinFileHandler.updateLineInBin(oldIncome, updatedIncome) // Обновляем в файле
+        }
+        incomes[position] = updatedIncome
+        notifyItemChanged(position)
+    }
+
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
@@ -106,36 +133,77 @@ class IncomeAdapter(
         val inputDate = view.findViewById<EditText>(R.id.input_date)
         val inputType = view.findViewById<EditText>(R.id.input_type)
 
-        val currentIncomeItem = incomeItems[position]
-        inputIncome.setText(currentIncomeItem.amount.toString())
-        inputDate.setText(currentIncomeItem.date)
-        inputType.setText(currentIncomeItem.type)
+        val currentIncome = incomes[position]
+        inputIncome.setText(currentIncome.amount.toString())
+        inputDate.setText(currentIncome.date)
+        inputType.setText(currentIncome.type)
+
+        val calendar = Calendar.getInstance()
+        val datePicker = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+
+            val format = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+            inputDate.setText(format.format(calendar.time))
+        }
+
+        inputDate.setOnClickListener {
+            DatePickerDialog(
+                activity,
+                datePicker,
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
 
         builder.setPositiveButton("OK") { _, _ ->
             val newIncomeString = inputIncome.text.toString()
             val newDate = inputDate.text.toString()
             val newType = inputType.text.toString()
 
-            if (newIncomeString.isNotEmpty()) {
-                val newIncome = newIncomeString.toDoubleOrNull()
-                if (newIncome != null) {
-                    // Обновляем в базе данных
-                    if (activity.useSql) {
-                        // Получаем ID для обновления
-                        val incomeId = currentIncomeItem.amount.toLong() // Здесь нужно использовать правильный ID
-                        activity.dbHelper.updateIncome(IncomeItem(newIncome, newDate, newType), incomeId)
-                    }
+            if (newIncomeString.isNotEmpty() && newDate.isNotEmpty() && newType.isNotEmpty()) {
+                val newAmount = newIncomeString.toDoubleOrNull()
 
-                    // Обновляем элемент в адаптере
-                    val newIncomeItem = IncomeItem(newIncome, newDate, newType)
-                    incomeItems[position] = newIncomeItem
-                    notifyItemChanged(position)
-                    showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
+                if (newAmount != null) {
+                    if (activity.useSql) {
+                        val incomeId = currentIncome.id
+                        if (incomeId != null) {
+                            val updatedIncome = Income(incomeId, newAmount, newDate, newType)
+                            activity.dbHelper.updateIncome(updatedIncome, incomeId)
+                            incomes[position] = updatedIncome
+                            notifyItemChanged(position)
+                            showToast("Доход обновлен")
+
+                            sharedFinanceViewModel.deleteIncome(currentIncome.amount)
+                            sharedFinanceViewModel.addIncome(newAmount)
+
+                        } else {
+                            showToast("Ошибка: id дохода не найден")
+                        }
+                    } else {
+                        val oldIncome = incomes[position]
+                        val newIncome = Income(null, newAmount, newDate, newType)
+                        BinFileHandler.updateLineInBin(oldIncome, newIncome)
+                        incomes[position] = newIncome
+                        notifyItemChanged(position)
+
+                        sharedFinanceViewModel.deleteIncome(currentIncome.amount)
+                        sharedFinanceViewModel.addIncome(newAmount)
+
+                        showToast("Доход обновлен")
+                    }
+                    val oldAmount = currentIncome.amount
+                    val difference = newAmount - oldAmount
+                    sharedFinanceViewModel.addIncome(difference)
+                    showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб") // Исправлено сообщение
+
                 } else {
                     showToast("Введите корректное число")
                 }
             } else {
-                showToast("Введите сумму дохода")
+                showToast("Заполните все поля")
             }
         }
 

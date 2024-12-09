@@ -17,7 +17,6 @@ import com.example.myapplication_3.MyApplication
 import com.example.myapplication_3.R
 import com.example.myapplication_3.SharedFinanceViewModel
 import com.example.myapplication_3.income.BinFileHandler
-import com.example.myapplication_3.income.IncomeItem
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar

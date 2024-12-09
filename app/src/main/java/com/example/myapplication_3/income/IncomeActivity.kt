@@ -68,17 +68,23 @@ class IncomeActivity : BaseMenu() {
         sharedFinanceViewModel = (application as MyApplication).sharedFinanceViewModel
         BinFileHandler.initialize(this, "incomes.bin")
 
-        incomeAdapter = IncomeAdapter(mutableListOf(), sharedFinanceViewModel, this)
+        // !!! СНАЧАЛА создаем адаптер:
+        incomeAdapter = IncomeAdapter(mutableListOf(), sharedFinanceViewModel, this, dbHelper)
         recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.adapter = incomeAdapter
+
+        // !!! ПОТОМ загружаем данные в адаптер:
+        loadIncomes()
 
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = incomeAdapter
 
-        loadIncomes()
+//        loadIncomes()
 
         val buttonPdfIncome = findViewById<Button>(R.id.button_pdf_income)
         buttonPdfIncome.setOnClickListener {
-            val incomes = incomeAdapter.incomeItems
+            val incomes = incomeAdapter.incomes
             PDFGeneratorIncome.generatePdf(this, incomes)
             Toast.makeText(this, "PDF отчет по доходам создан", Toast.LENGTH_SHORT).show()
         }
@@ -178,9 +184,9 @@ class IncomeActivity : BaseMenu() {
                     if (useSql) {
                         val newIncomeId = dbHelper.insertIncome(incomeAmount, dateString, typeString)
                         if (newIncomeId != -1L) {
-                            val newIncome = dbHelper.getIncomeById(newIncomeId)
+                            val newIncome = Income(null, incomeAmount, dateString, typeString)
                             if (newIncome != null) {
-                                incomeAdapter.incomeItems.add(0, IncomeItem(newIncome.amount, newIncome.date, newIncome.type))
+                                incomeAdapter.incomes.add(0, Income(null,newIncome.amount, newIncome.date, newIncome.type))
                                 incomeAdapter.notifyItemInserted(0)
                                 showToast("Доход добавлен в базу данных")
                             } else {
@@ -192,10 +198,10 @@ class IncomeActivity : BaseMenu() {
                         sharedFinanceViewModel.addIncome(incomeAmount)
 
                     } else {
-                        val incomeItem = IncomeItem(incomeAmount, dateString, typeString)
+                        val incomeItem = Income(null,incomeAmount, dateString, typeString)
                         BinFileHandler.addLineToBin(incomeItem)
                         sharedFinanceViewModel.addIncome(incomeAmount)
-                        incomeAdapter.incomeItems.add(0, incomeItem)
+                        incomeAdapter.incomes.add(0, incomeItem)
                         incomeAdapter.notifyItemInserted(0)
                         showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
                     }
@@ -219,26 +225,16 @@ class IncomeActivity : BaseMenu() {
     override fun onPause() {
         super.onPause()
         if (!useSql) { // Сохраняем в файл, только если не используем SQL
-            BinFileHandler.saveDataToBin(incomeAdapter.incomeItems)
+            BinFileHandler.saveDataToBin(incomeAdapter.incomes)
         }
     }
 
     private fun loadIncomes() {
-        incomeAdapter.incomeItems.clear()
+        incomeAdapter.incomes.clear()
         if (useSql) {
-            // Получаем все доходы из базы данных
-            val incomesFromDb = dbHelper.getAllIncomes()
-
-            // Создаем список IncomeItem, добавляя элементы в начало
-            val incomeItems = incomesFromDb.map { dbIncome ->
-                IncomeItem(dbIncome.amount, dbIncome.date, dbIncome.type)
-            }
-
-            // Добавляем элементы в начало списка адаптера
-            incomeAdapter.incomeItems.addAll(0, incomeItems)
+            incomeAdapter.incomes.addAll(0, dbHelper.getAllIncomes())
         } else {
-            // Если не используем SQL, загружаем из файла
-            incomeAdapter.incomeItems.addAll(BinFileHandler.loadDataFromBin())
+            incomeAdapter.incomes.addAll(BinFileHandler.loadDataFromBin())
         }
         incomeAdapter.notifyDataSetChanged()
     }

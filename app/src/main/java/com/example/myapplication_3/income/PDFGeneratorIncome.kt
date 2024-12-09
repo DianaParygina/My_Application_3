@@ -9,7 +9,7 @@ import java.io.FileOutputStream
 
 object PDFGeneratorIncome {
 
-    fun generatePdf(context: Context, incomes: List<IncomeItem>) {
+    fun generatePdf(context: Context, incomes: List<Income>) {
         try {
             val pdfDirectory = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "incomes")
             if (!pdfDirectory.exists()) {
