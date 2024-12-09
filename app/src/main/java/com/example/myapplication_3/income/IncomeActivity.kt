@@ -34,8 +34,8 @@ class IncomeActivity : BaseMenu() {
     private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
     private lateinit var recyclerView: RecyclerView
     private var selectedPositionForContextMenu: Int = -1
-    private var useSql = false
-    private lateinit var dbHelper: IncomeDatabaseHelper
+    var useSql = false
+    lateinit var dbHelper: IncomeDatabaseHelper
     private lateinit var sharedPreferences: SharedPreferences
     private val USE_SQL_KEY = "use_sql"
 
@@ -51,11 +51,8 @@ class IncomeActivity : BaseMenu() {
         buttonSql.setOnClickListener {
             useSql = true
             saveUseSqlState()
-            loadIncomes() // Перезагружаем данные из выбранного источника
-            // ...  (возможно, нужно обновить адаптер или другие элементы UI)
+            loadIncomes()
             Toast.makeText(this, "Работа с SQL включена", Toast.LENGTH_SHORT).show()
-
-
         }
 
         val buttonSqlDontUse = findViewById<Button>(R.id.button_sql_dont_use)
@@ -63,10 +60,7 @@ class IncomeActivity : BaseMenu() {
             useSql = false
             saveUseSqlState()
             loadIncomes()
-//            dbHelper.clearIncomesTable()// Перезагружаем данные из выбранного источника
-            // ... (возможно, нужно обновить адаптер или другие элементы UI)
             Toast.makeText(this, "Работа с SQL выключена", Toast.LENGTH_SHORT).show()
-
         }
 
         registerForContextMenu(findViewById(android.R.id.content))
@@ -80,9 +74,7 @@ class IncomeActivity : BaseMenu() {
         recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = incomeAdapter
 
-//        val incomeItems = BinFileHandler.loadDataFromBin()
-//        incomeAdapter.incomeItems.addAll(incomeItems)
-        incomeAdapter.notifyDataSetChanged()
+        loadIncomes()
 
         val buttonPdfIncome = findViewById<Button>(R.id.button_pdf_income)
         buttonPdfIncome.setOnClickListener {
@@ -103,17 +95,11 @@ class IncomeActivity : BaseMenu() {
             }
         }
 
-
-
-
         val snapHelper = PagerSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)
 
         updateBottomNavigationView(R.id.Income)
-
-        loadIncomes()
     }
-
 
     override fun getLayoutResId(): Int {
         return R.layout.activity_income
@@ -194,16 +180,16 @@ class IncomeActivity : BaseMenu() {
                         if (newIncomeId != -1L) {
                             val newIncome = dbHelper.getIncomeById(newIncomeId)
                             if (newIncome != null) {
-                                incomeAdapter.incomeItems.add(0, IncomeItem(newIncome.amount, newIncome.date, newIncome.typeId.toString()))
+                                incomeAdapter.incomeItems.add(0, IncomeItem(newIncome.amount, newIncome.date, newIncome.type))
                                 incomeAdapter.notifyItemInserted(0)
-                                showToast("Доход добавлен в базу данных") // Уведомление об успешном добавлении
+                                showToast("Доход добавлен в базу данных")
                             } else {
                                 showToast("Ошибка при добавлении дохода в базу данных")
                             }
                         } else {
                             showToast("Ошибка при добавлении дохода в базу данных")
                         }
-                        sharedFinanceViewModel.addIncome(incomeAmount) // Обновление ViewModel
+                        sharedFinanceViewModel.addIncome(incomeAmount)
 
                     } else {
                         val incomeItem = IncomeItem(incomeAmount, dateString, typeString)
@@ -222,19 +208,12 @@ class IncomeActivity : BaseMenu() {
         }
 
         builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
-
         builder.show()
     }
-
-
 
     override fun onResume() {
         super.onResume()
         loadIncomes()
-
-//        incomeAdapter.incomeItems.clear()
-//        incomeAdapter.incomeItems.addAll(BinFileHandler.loadDataFromBin())
-//        incomeAdapter.notifyDataSetChanged()
     }
 
     override fun onPause() {
@@ -244,25 +223,27 @@ class IncomeActivity : BaseMenu() {
         }
     }
 
-
     private fun loadIncomes() {
         incomeAdapter.incomeItems.clear()
         if (useSql) {
+            // Получаем все доходы из базы данных
             val incomesFromDb = dbHelper.getAllIncomes()
+
+            // Создаем список IncomeItem, добавляя элементы в начало
             val incomeItems = incomesFromDb.map { dbIncome ->
-                IncomeItem(dbIncome.amount, dbIncome.date, dbIncome.typeId.toString())
+                IncomeItem(dbIncome.amount, dbIncome.date, dbIncome.type)
             }
-            incomeAdapter.incomeItems.addAll(incomeItems)
+
+            // Добавляем элементы в начало списка адаптера
+            incomeAdapter.incomeItems.addAll(0, incomeItems)
         } else {
+            // Если не используем SQL, загружаем из файла
             incomeAdapter.incomeItems.addAll(BinFileHandler.loadDataFromBin())
         }
         incomeAdapter.notifyDataSetChanged()
     }
 
     private fun saveUseSqlState() {
-        with(sharedPreferences.edit()) {
-            putBoolean(USE_SQL_KEY, useSql)
-            apply()
-        }
+        sharedPreferences.edit().putBoolean(USE_SQL_KEY, useSql).apply()
     }
 }
