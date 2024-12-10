@@ -8,7 +8,7 @@ import android.util.Log
 import com.example.myapplication_3.income.Income
 import com.example.myapplication_3.income.IncomeType
 
-class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 4) { // Увеличиваем версию БД
+class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 6) { // Увеличиваем версию БД
 
     companion object {
         const val TABLE_INCOMES = "incomes"
@@ -45,10 +45,8 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
         Log.d("IncomeDatabaseHelper", "Database created")
 
         // !!! Добавляем несколько начальных типов доходов
-        insertIncomeType(db, "Зарплата")
-        insertIncomeType(db, "Подработка")
-        insertIncomeType(db, "Подарок")
-        insertIncomeType(db, "Дивиденды")
+        insertIncomeType(db, "Zp")
+        insertIncomeType(db, "Present")
 
     }
 
@@ -67,180 +65,150 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
     }
 
 
-    // !!! Изменена функция добавления дохода. Теперь она принимает id типа дохода.
     fun insertIncome(amount: Double, date: String, typeId: Long): Long {
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COL_INCOME_AMOUNT, amount)
-            put(COL_INCOME_DATE, date)
-            put(COL_INCOME_TYPE_ID, typeId) // !!! Используем id типа
+        return writableDatabase.use { db ->
+            val values = ContentValues().apply {
+                put(COL_INCOME_AMOUNT, amount)
+                put(COL_INCOME_DATE, date)
+                put(COL_INCOME_TYPE_ID, typeId)
+            }
+            db.insert(TABLE_INCOMES, null, values)
         }
-        val newRowId = db.insert(TABLE_INCOMES, null, values)
-        db.close()
-        return newRowId
     }
 
-    // !!!  Получаем все доходы с названиями типов
     fun getAllIncomes(): List<Income> {
-        val db = readableDatabase
-        val incomes = mutableListOf<Income>()
-
-        val sql = """
+        return readableDatabase.use { db ->
+            val incomes = mutableListOf<Income>()
+            val sql = """
             SELECT i.*, t.$COL_TYPE_NAME 
             FROM $TABLE_INCOMES i
             JOIN $TABLE_INCOME_TYPES t ON i.$COL_INCOME_TYPE_ID = t.$COL_TYPE_ID
             ORDER BY i.$COL_INCOME_ID DESC
         """
-        val cursor = db.rawQuery(sql, null)
-
-        with(cursor) {
-            while (moveToNext()) {
-                val income = Income(
-                    getLong(getColumnIndexOrThrow(COL_INCOME_ID)),
-                    getDouble(getColumnIndexOrThrow(COL_INCOME_AMOUNT)),
-                    getString(getColumnIndexOrThrow(COL_INCOME_DATE)),
-                    getString(getColumnIndexOrThrow(COL_TYPE_NAME)) // !!! Получаем имя типа
-                )
-                incomes.add(income)
+            db.rawQuery(sql, null).use { cursor ->
+                with(cursor) {
+                    while (moveToNext()) {
+                        val income = Income(
+                            getLong(getColumnIndexOrThrow(COL_INCOME_ID)),
+                            getDouble(getColumnIndexOrThrow(COL_INCOME_AMOUNT)),
+                            getString(getColumnIndexOrThrow(COL_INCOME_DATE)),
+                            getString(getColumnIndexOrThrow(COL_TYPE_NAME))
+                        )
+                        incomes.add(income)
+                    }
+                }
             }
-            close()
+            incomes
         }
-
-        db.close()
-        return incomes
     }
 
 
 
-    // !!!  Получаем все типы доходов
     fun getAllIncomeTypes(): List<IncomeType> {
-        val db = readableDatabase
-        val incomeTypes = mutableListOf<IncomeType>()
-
-        val cursor = db.query(
-            TABLE_INCOME_TYPES,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        )
-
-        with(cursor) {
-            while (moveToNext()) {
-                val incomeType = IncomeType(
-                    getInt(getColumnIndexOrThrow(COL_TYPE_ID)),
-                    getString(getColumnIndexOrThrow(COL_TYPE_NAME))
-                )
-                incomeTypes.add(incomeType)
+        return readableDatabase.use { db ->
+            val incomeTypes = mutableListOf<IncomeType>()
+            db.query(
+                TABLE_INCOME_TYPES,
+                null, null, null, null, null, null
+            ).use { cursor ->
+                with(cursor) {
+                    while (moveToNext()) {
+                        val incomeType = IncomeType(
+                            getInt(getColumnIndexOrThrow(COL_TYPE_ID)),
+                            getString(getColumnIndexOrThrow(COL_TYPE_NAME))
+                        )
+                        incomeTypes.add(incomeType)
+                    }
+                }
             }
-            close()
+            incomeTypes
         }
-
-        db.close()
-        return incomeTypes
     }
 
 
 
-    private fun getIncomeTypeIdByName(typeName: String): Long? { // !!! Новый метод
-        val db = readableDatabase
-        val cursor = db.query(
+    private fun getIncomeTypeIdByName(db: SQLiteDatabase, typeName: String): Long? {
+        return db.query(
             TABLE_INCOME_TYPES,
             arrayOf(COL_TYPE_ID),
             "$COL_TYPE_NAME = ?",
             arrayOf(typeName),
             null, null, null
-        )
-        var typeId: Long? = null
-        with(cursor) {
-            if (moveToFirst()) {
-                typeId = getLong(getColumnIndexOrThrow(COL_TYPE_ID))
+        ).use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.getLong(cursor.getColumnIndexOrThrow(COL_TYPE_ID))
+            } else {
+                null // Возвращаем null, если тип не найден
             }
-            close()
-        }
-        db.close()
-        return typeId
+            }
     }
+
 
 
     fun updateIncome(income: Income, incomeId: Long) {
-        val db = writableDatabase
-        val typeId = getIncomeTypeIdByName(income.type) // Получаем ID типа по имени
+        writableDatabase.use { db ->
+            val typeId = getIncomeTypeIdByName(db, income.type) // !!! Передаем db
 
-        if (typeId != null) {
-            val values = ContentValues().apply {
-                put(COL_INCOME_AMOUNT, income.amount)
-                put(COL_INCOME_DATE, income.date)
-                put(COL_INCOME_TYPE_ID, typeId) // Используем ID типа
+            if (typeId != null) {
+                val values = ContentValues().apply {
+                    put(COL_INCOME_AMOUNT, income.amount)
+                    put(COL_INCOME_DATE, income.date)
+                    put(COL_INCOME_TYPE_ID, typeId)
+                }
+                db.update(TABLE_INCOMES, values, "$COL_INCOME_ID = ?", arrayOf(incomeId.toString()))
+            } else {
+                Log.e("IncomeDatabaseHelper", "Type not found for name: ${income.type}")
             }
-            db.update(TABLE_INCOMES, values, "$COL_INCOME_ID = ?", arrayOf(incomeId.toString()))
-        } else {
-            // Обработать ошибку: тип не найден
-            Log.e("IncomeDatabaseHelper", "Type not found for name: ${income.type}")
-            // Или показать Toast с ошибкой
         }
-        db.close()
     }
 
     fun deleteIncome(incomeId: Long) {
-        val db = writableDatabase
-        db.delete(TABLE_INCOMES, "$COL_INCOME_ID = ?", arrayOf(incomeId.toString()))
-        db.close()
+        writableDatabase.use { db ->
+            db.delete(TABLE_INCOMES, "$COL_INCOME_ID = ?", arrayOf(incomeId.toString()))
+        }
     }
 
     fun getIncomeById(incomeId: Long): Income? {
-        val db = readableDatabase
-        val cursor = db.query(
-            TABLE_INCOMES,
-            null,
-            "$COL_INCOME_ID = ?",
-            arrayOf(incomeId.toString()),
-            null,
-            null,
-            null
-        )
-
-        var income: Income? = null
-        with(cursor) {
-            if (moveToFirst()) {
-                income = Income(
-                    getLong(getColumnIndexOrThrow(COL_INCOME_ID)),
-                    getDouble(getColumnIndexOrThrow(COL_INCOME_AMOUNT)),
-                    getString(getColumnIndexOrThrow(COL_INCOME_DATE)),
-                    getLong(getColumnIndexOrThrow(COL_INCOME_TYPE_ID)).let { typeId ->
-                        getIncomeTypeNameById(typeId) ?: "Unknown Type" // !!! Получаем имя типа по id
-                    }
-                )
+        return readableDatabase.use { db ->
+            db.query(
+                TABLE_INCOMES,
+                null,
+                "$COL_INCOME_ID = ?",
+                arrayOf(incomeId.toString()),
+                null, null, null
+            ).use { cursor ->
+                if (cursor.moveToFirst()) { // Проверяем, есть ли данные
+                    val typeId = cursor.getLong(cursor.getColumnIndexOrThrow(COL_INCOME_TYPE_ID))
+                    Income(
+                        cursor.getLong(cursor.getColumnIndexOrThrow(COL_INCOME_ID)),
+                        cursor.getDouble(cursor.getColumnIndexOrThrow(COL_INCOME_AMOUNT)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COL_INCOME_DATE)),
+                        getIncomeTypeNameById(db, typeId) ?: "Unknown Type"
+                    )
+                } else {
+                    null // Возвращаем null, если доход не найден
+                }
             }
-            close()
         }
-
-        db.close()
-        return income
     }
 
 
 
-    private fun getIncomeTypeNameById(typeId: Long): String? {
-        val db = readableDatabase
-        val cursor = db.query(
+    private fun getIncomeTypeNameById(db: SQLiteDatabase, typeId: Long): String? {
+        return db.query(
             TABLE_INCOME_TYPES,
-            arrayOf(COL_TYPE_NAME), // Выбираем только имя типа
+            arrayOf(COL_TYPE_NAME),
             "$COL_TYPE_ID = ?",
             arrayOf(typeId.toString()),
             null, null, null
-        )
-        var typeName: String? = null
-        with(cursor) {
-            if (moveToFirst()) {
-                typeName = getString(getColumnIndexOrThrow(COL_TYPE_NAME))
+        ).use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.getString(cursor.getColumnIndexOrThrow(COL_TYPE_NAME))
+            } else {
+                null // Возвращаем null, если тип не найден
             }
-            close()
         }
-        db.close()
-        return typeName
     }
+
 
 }

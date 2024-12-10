@@ -89,11 +89,6 @@ class IncomeActivity : BaseMenu() {
         buttonPdfIncome.setOnClickListener {
             val incomes = incomeAdapter.incomes
             PDFGeneratorIncome.generatePdf(this, incomes)
-            Toast.makeText(this, "PDF отчет по доходам создан", Toast.LENGTH_SHORT).show()
-        }
-
-        val buttonPdfIncomeOpen = findViewById<Button>(R.id.button_pdf_income_open)
-        buttonPdfIncomeOpen.setOnClickListener {
             val pdfPathIncome = PDFGeneratorIncome.getPdfFilePath(this)
             if (pdfPathIncome != null) {
                 val uriIncome = FileProvider.getUriForFile(this, "${packageName}.provider", File(pdfPathIncome))

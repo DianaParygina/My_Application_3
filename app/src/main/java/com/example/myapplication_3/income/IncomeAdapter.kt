@@ -156,24 +156,19 @@ class IncomeAdapter(
         }
 
 
-        // !!! Spinner для типов доходов (аналогично showAddIncomeDialog)
+        // Spinner для типов доходов
         val incomeTypes = dbHelper.getAllIncomeTypes()
         val adapter = ArrayAdapter(activity, android.R.layout.simple_spinner_item, incomeTypes.map { it.name })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
 
-        val spinner = Spinner(activity)
+        val spinner = view.findViewById<Spinner>(R.id.income_type_spinner) // !!! Находим Spinner в layout
         spinner.adapter = adapter
 
-
-        // !!! Устанавливаем текущий тип дохода в Spinner
+        // Устанавливаем текущий тип дохода в Spinner
         val currentTypeIndex = incomeTypes.indexOfFirst { it.name == currentIncome.type }
         if (currentTypeIndex != -1) {
             spinner.setSelection(currentTypeIndex)
         }
-
-        // !!! Добавляем Spinner в layout диалога
-//        val layout = view.findViewById<LinearLayout>(R.id.dialog_layout)
-//        layout.addView(spinner)
 
 
         inputDate.setOnClickListener {

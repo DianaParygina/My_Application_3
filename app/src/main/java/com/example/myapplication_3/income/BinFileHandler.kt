@@ -34,7 +34,7 @@ object BinFileHandler {
                     date,
                     type
                 )
-                incomes.add(income)
+                incomes.add(0,income)
             }
         } catch (e: EOFException) {
             // Достигнут конец файла
