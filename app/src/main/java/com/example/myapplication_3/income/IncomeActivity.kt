@@ -11,8 +11,11 @@ import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -131,6 +134,10 @@ class IncomeActivity : BaseMenu() {
                 showAddIncomeDialog()
                 true
             }
+            R.id.add_income_type -> {
+                showAddTypeDialog()
+                true
+            }
             else -> super.onContextItemSelected(item)
         }
     }
@@ -145,13 +152,15 @@ class IncomeActivity : BaseMenu() {
     private fun showAddIncomeDialog() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Добавить доход")
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_income, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_add_income, null) // Ваш layout для диалога
         builder.setView(view)
 
         val inputIncome = view.findViewById<EditText>(R.id.input_amount)
         val inputDate = view.findViewById<EditText>(R.id.input_date)
-        val inputType = view.findViewById<EditText>(R.id.input_type)
+        // inputType больше не нужен, так как мы используем Spinner
 
+
+        // Календарь для выбора даты (как в вашем исходном коде)
         val calendar = Calendar.getInstance()
         val datePicker = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
             calendar.set(Calendar.YEAR, year)
@@ -172,41 +181,48 @@ class IncomeActivity : BaseMenu() {
             ).show()
         }
 
+
+        // !!! Spinner для выбора типа дохода
+        val spinner = view.findViewById<Spinner>(R.id.income_type_spinner)
+        val incomeTypes = dbHelper.getAllIncomeTypes()
+
+        // Создайте адаптер и установите его для Spinner
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, incomeTypes.map { it.name })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        // !!! Добавляем Spinner в layout диалога
+//        val layout = view.findViewById<LinearLayout>(R.id.input_type_spinner) //  ID вашего LinearLayout в layout диалога
+//        layout.addView(spinner)
+
+
         builder.setPositiveButton("OK") { _, _ ->
             val incomeString = inputIncome.text.toString()
             val dateString = inputDate.text.toString()
-            val typeString = inputType.text.toString()
 
-            if (incomeString.isNotEmpty() && dateString.isNotEmpty() && typeString.isNotEmpty()) {
+
+            if (incomeString.isNotEmpty() && dateString.isNotEmpty()) {
                 val incomeAmount = incomeString.toDoubleOrNull()
 
                 if (incomeAmount != null) {
-                    if (useSql) {
-                        val newIncomeId = dbHelper.insertIncome(incomeAmount, dateString, typeString)
-                        if (newIncomeId != -1L) {
-                            val newIncome = Income(null, incomeAmount, dateString, typeString)
-                            if (newIncome != null) {
-                                incomeAdapter.incomes.add(0, Income(null,newIncome.amount, newIncome.date, newIncome.type))
-                                incomeAdapter.notifyItemInserted(0)
-                                showToast("Доход добавлен в базу данных")
-                            } else {
-                                showToast("Ошибка при добавлении дохода в базу данных")
-                            }
-                        } else {
-                            showToast("Ошибка при добавлении дохода в базу данных")
-                        }
+                    // !!! Получаем выбранный тип дохода
+                    val selectedType = incomeTypes[spinner.selectedItemPosition]
+
+
+                    val newIncomeId = dbHelper.insertIncome(incomeAmount, dateString, selectedType.id.toLong()) // !!! Используем typeId
+
+                    if (newIncomeId != -1L) {
+                        val newIncome = Income(newIncomeId, incomeAmount, dateString, selectedType.name) // !!! Передаем имя типа для отображения
+                        incomeAdapter.addIncome(newIncome) // Обновляем адаптер
+                        showToast("Доход добавлен")
                         sharedFinanceViewModel.addIncome(incomeAmount)
 
                     } else {
-                        val incomeItem = Income(null,incomeAmount, dateString, typeString)
-                        BinFileHandler.addLineToBin(incomeItem)
-                        sharedFinanceViewModel.addIncome(incomeAmount)
-                        incomeAdapter.incomes.add(0, incomeItem)
-                        incomeAdapter.notifyItemInserted(0)
-                        showToast("Ваш доход ${sharedFinanceViewModel.getTotalIncome()} руб")
+                        showToast("Ошибка при добавлении дохода")
                     }
+
                 } else {
-                    showToast("Введите корректные данные")
+                    showToast("Введите корректную сумму")
                 }
             } else {
                 showToast("Заполните все поля")
@@ -241,5 +257,36 @@ class IncomeActivity : BaseMenu() {
 
     private fun saveUseSqlState() {
         sharedPreferences.edit().putBoolean(USE_SQL_KEY, useSql).apply()
+    }
+
+
+
+
+
+
+
+
+
+
+    private fun showAddTypeDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Добавить тип дохода")
+        val input = EditText(this)
+        builder.setView(input)
+
+        builder.setPositiveButton("OK") { _, _ ->
+            val typeName = input.text.toString().trim()
+            if (typeName.isNotEmpty()) {
+                val db = dbHelper.writableDatabase
+                dbHelper.insertIncomeType(db, typeName) // !!! Вставляем новый тип
+                db.close()
+
+                loadIncomes() // !!! Обновляем список доходов (не обязательно, если вы не отображаете типы сразу)
+
+                Toast.makeText(this, "Тип дохода добавлен", Toast.LENGTH_SHORT).show()
+            }
+        }
+        builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
+        builder.show()
     }
 }

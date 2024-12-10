@@ -6,7 +6,10 @@ import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -61,31 +64,30 @@ class IncomeAdapter(
 
     override fun getItemCount() = incomes.size
 
-    fun addIncome(income: Income) { // Принимает Income
+    fun addIncome(income: Income) {
+        incomes.add(0, income) // Добавляем новый доход
+        notifyItemInserted(0)
+
         if (activity.useSql) {
-            val newId = activity.dbHelper.insertIncome(income.amount, income.date, income.type)
-            incomes.add(0, income.copy(id = newId)) // Копируем с новым id
+            // id уже установлено в  IncomeActivity
+            // НЕ добавляйте доход еще раз здесь
         } else {
             BinFileHandler.addLineToBin(income)
-            incomes.add(0, income)
         }
-        notifyItemInserted(0)
     }
 
     fun deleteIncome(position: Int) {
         val income = incomes[position]
-        val amountToDelete = income.amount // !!! Сохраняем сумму для удаления
-
         if (activity.useSql) {
-            income.id?.let {
-                activity.dbHelper.deleteIncome(it)
-                sharedFinanceViewModel.deleteIncome(amountToDelete) // !!! Вызываем после удаления из БД
-            }
+            income.id?.let { incomeId -> // используем let для безопасного доступа к id
+                dbHelper.deleteIncome(incomeId)
+                sharedFinanceViewModel.deleteIncome(income.amount)
+            } ?: showToast("Ошибка при удалении: id дохода null") // обработка случая, когда id null
+
         } else {
             BinFileHandler.deleteLineFromBin(income)
-            sharedFinanceViewModel.deleteIncome(amountToDelete) // !!! Вызываем после удаления из файла
+            sharedFinanceViewModel.deleteIncome(income.amount)
         }
-
         incomes.removeAt(position)
         notifyItemRemoved(position)
     }
@@ -93,12 +95,17 @@ class IncomeAdapter(
 
     fun updateIncome(position: Int, updatedIncome: Income) {
         if (activity.useSql) {
-            updatedIncome.id?.let { activity.dbHelper.updateIncome(updatedIncome, it) }
+            updatedIncome.id?.let { dbHelper.updateIncome(updatedIncome, it) } // используем let
         } else {
-            val oldIncome = incomes[position] // Получаем старый доход
-            BinFileHandler.updateLineInBin(oldIncome, updatedIncome) // Обновляем в файле
+            BinFileHandler.updateLineInBin(incomes[position], updatedIncome)
         }
-        incomes[position] = updatedIncome
+
+        // Обновляем ViewModel
+        val oldAmount = incomes[position].amount
+        sharedFinanceViewModel.deleteIncome(oldAmount) // удаляем старую сумму
+        sharedFinanceViewModel.addIncome(updatedIncome.amount) // добавляем новую сумму
+
+        incomes[position] = updatedIncome // Обновляем список доходов
         notifyItemChanged(position)
     }
 
@@ -131,12 +138,12 @@ class IncomeAdapter(
 
         val inputIncome = view.findViewById<EditText>(R.id.input_amount)
         val inputDate = view.findViewById<EditText>(R.id.input_date)
-        val inputType = view.findViewById<EditText>(R.id.input_type)
+//        val inputType = view.findViewById<EditText>(R.id.input_type)
 
         val currentIncome = incomes[position]
         inputIncome.setText(currentIncome.amount.toString())
         inputDate.setText(currentIncome.date)
-        inputType.setText(currentIncome.type)
+//        inputType.setText(currentIncome.type)
 
         val calendar = Calendar.getInstance()
         val datePicker = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
@@ -147,6 +154,27 @@ class IncomeAdapter(
             val format = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
             inputDate.setText(format.format(calendar.time))
         }
+
+
+        // !!! Spinner для типов доходов (аналогично showAddIncomeDialog)
+        val incomeTypes = dbHelper.getAllIncomeTypes()
+        val adapter = ArrayAdapter(activity, android.R.layout.simple_spinner_item, incomeTypes.map { it.name })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        val spinner = Spinner(activity)
+        spinner.adapter = adapter
+
+
+        // !!! Устанавливаем текущий тип дохода в Spinner
+        val currentTypeIndex = incomeTypes.indexOfFirst { it.name == currentIncome.type }
+        if (currentTypeIndex != -1) {
+            spinner.setSelection(currentTypeIndex)
+        }
+
+        // !!! Добавляем Spinner в layout диалога
+//        val layout = view.findViewById<LinearLayout>(R.id.dialog_layout)
+//        layout.addView(spinner)
+
 
         inputDate.setOnClickListener {
             DatePickerDialog(
@@ -161,16 +189,16 @@ class IncomeAdapter(
         builder.setPositiveButton("OK") { _, _ ->
             val newIncomeString = inputIncome.text.toString()
             val newDate = inputDate.text.toString()
-            val newType = inputType.text.toString()
+            val selectedType = incomeTypes[spinner.selectedItemPosition]
 
-            if (newIncomeString.isNotEmpty() && newDate.isNotEmpty() && newType.isNotEmpty()) {
+            if (newIncomeString.isNotEmpty() && newDate.isNotEmpty()) {
                 val newAmount = newIncomeString.toDoubleOrNull()
 
                 if (newAmount != null) {
                     if (activity.useSql) {
                         val incomeId = currentIncome.id
                         if (incomeId != null) {
-                            val updatedIncome = Income(incomeId, newAmount, newDate, newType)
+                            val updatedIncome = Income(currentIncome.id, newAmount, newDate, selectedType.name)
                             activity.dbHelper.updateIncome(updatedIncome, incomeId)
                             incomes[position] = updatedIncome
                             notifyItemChanged(position)
@@ -184,7 +212,7 @@ class IncomeAdapter(
                         }
                     } else {
                         val oldIncome = incomes[position]
-                        val newIncome = Income(null, newAmount, newDate, newType)
+                        val newIncome = Income(null, newAmount, newDate, selectedType.name)
                         BinFileHandler.updateLineInBin(oldIncome, newIncome)
                         incomes[position] = newIncome
                         notifyItemChanged(position)

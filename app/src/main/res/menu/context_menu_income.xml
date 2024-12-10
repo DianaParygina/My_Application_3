@@ -3,4 +3,7 @@
     <item
         android:id="@+id/add_income"
         android:title="Добавить доход"/>
+    <item
+        android:id="@+id/add_income_type"
+        android:title="Добавить тип дохода"/>
 </menu>
