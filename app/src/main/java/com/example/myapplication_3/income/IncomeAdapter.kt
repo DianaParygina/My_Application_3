@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -17,8 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication_3.R
 import com.example.myapplication_3.SharedFinanceViewModel
 import com.example.myapplication_3.BD.IncomeDatabaseHelper
-import com.example.myapplication_3.income.BinFileHandler.addLineToBin
-import com.example.myapplication_3.income.BinFileHandler.deleteLineFromBin
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -40,7 +37,6 @@ class IncomeAdapter(
         }
 
         override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
-            // Здесь можно добавить элементы контекстного меню, если нужно
         }
     }
 
@@ -65,12 +61,10 @@ class IncomeAdapter(
     override fun getItemCount() = incomes.size
 
     fun addIncome(income: Income) {
-        incomes.add(0, income) // Добавляем новый доход
+        incomes.add(0, income)
         notifyItemInserted(0)
 
         if (activity.useSql) {
-            // id уже установлено в  IncomeActivity
-            // НЕ добавляйте доход еще раз здесь
         } else {
             BinFileHandler.addLineToBin(income)
         }
@@ -79,10 +73,10 @@ class IncomeAdapter(
     fun deleteIncome(position: Int) {
         val income = incomes[position]
         if (activity.useSql) {
-            income.id?.let { incomeId -> // используем let для безопасного доступа к id
+            income.id?.let { incomeId ->
                 dbHelper.deleteIncome(incomeId)
                 sharedFinanceViewModel.deleteIncome(income.amount)
-            } ?: showToast("Ошибка при удалении: id дохода null") // обработка случая, когда id null
+            } ?: showToast("Ошибка при удалении: id дохода null")
 
         } else {
             BinFileHandler.deleteLineFromBin(income)
@@ -95,17 +89,16 @@ class IncomeAdapter(
 
     fun updateIncome(position: Int, updatedIncome: Income) {
         if (activity.useSql) {
-            updatedIncome.id?.let { dbHelper.updateIncome(updatedIncome, it) } // используем let
+            updatedIncome.id?.let { dbHelper.updateIncome(updatedIncome, it) }
         } else {
             BinFileHandler.updateLineInBin(incomes[position], updatedIncome)
         }
 
-        // Обновляем ViewModel
         val oldAmount = incomes[position].amount
-        sharedFinanceViewModel.deleteIncome(oldAmount) // удаляем старую сумму
-        sharedFinanceViewModel.addIncome(updatedIncome.amount) // добавляем новую сумму
+        sharedFinanceViewModel.deleteIncome(oldAmount)
+        sharedFinanceViewModel.addIncome(updatedIncome.amount)
 
-        incomes[position] = updatedIncome // Обновляем список доходов
+        incomes[position] = updatedIncome
         notifyItemChanged(position)
     }
 
@@ -138,12 +131,10 @@ class IncomeAdapter(
 
         val inputIncome = view.findViewById<EditText>(R.id.input_amount)
         val inputDate = view.findViewById<EditText>(R.id.input_date)
-//        val inputType = view.findViewById<EditText>(R.id.input_type)
 
         val currentIncome = incomes[position]
         inputIncome.setText(currentIncome.amount.toString())
         inputDate.setText(currentIncome.date)
-//        inputType.setText(currentIncome.type)
 
         val calendar = Calendar.getInstance()
         val datePicker = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
@@ -155,16 +146,13 @@ class IncomeAdapter(
             inputDate.setText(format.format(calendar.time))
         }
 
-
-        // Spinner для типов доходов
         val incomeTypes = dbHelper.getAllIncomeTypes()
         val adapter = ArrayAdapter(activity, android.R.layout.simple_spinner_item, incomeTypes.map { it.name })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
 
-        val spinner = view.findViewById<Spinner>(R.id.income_type_spinner) // !!! Находим Spinner в layout
+        val spinner = view.findViewById<Spinner>(R.id.income_type_spinner)
         spinner.adapter = adapter
 
-        // Устанавливаем текущий тип дохода в Spinner
         val currentTypeIndex = incomeTypes.indexOfFirst { it.name == currentIncome.type }
         if (currentTypeIndex != -1) {
             spinner.setSelection(currentTypeIndex)

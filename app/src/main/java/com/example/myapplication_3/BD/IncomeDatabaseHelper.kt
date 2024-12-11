@@ -8,16 +8,16 @@ import android.util.Log
 import com.example.myapplication_3.income.Income
 import com.example.myapplication_3.income.IncomeType
 
-class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 6) { // Увеличиваем версию БД
+class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 10) {
 
     companion object {
         const val TABLE_INCOMES = "incomes"
         const val COL_INCOME_ID = "_id"
         const val COL_INCOME_AMOUNT = "amount"
         const val COL_INCOME_DATE = "date"
-        const val COL_INCOME_TYPE_ID = "type_id" // !!! Ссылаемся на id типа дохода
+        const val COL_INCOME_TYPE_ID = "type_id"
 
-        const val TABLE_INCOME_TYPES = "income_types"  // !!! Новая таблица для типов доходов
+        const val TABLE_INCOME_TYPES = "income_types"
         const val COL_TYPE_ID = "_id"
         const val COL_TYPE_NAME = "name"
     }
@@ -40,17 +40,15 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
             )
         """
 
-        db.execSQL(sqlIncomeTypes)    // !!! Сначала создаем таблицу типов
+        db.execSQL(sqlIncomeTypes)
         db.execSQL(sqlIncomes)
         Log.d("IncomeDatabaseHelper", "Database created")
 
-        // !!! Добавляем несколько начальных типов доходов
         insertIncomeType(db, "Zp")
         insertIncomeType(db, "Present")
 
     }
 
-    // !!! Функция для добавления типа дохода (можно использовать в onCreate и в приложении)
     fun insertIncomeType(db: SQLiteDatabase, typeName: String): Long {
         val values = ContentValues().apply {
             put(COL_TYPE_NAME, typeName)
@@ -60,7 +58,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         db.execSQL("DROP TABLE IF EXISTS $TABLE_INCOMES")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_INCOME_TYPES") // !!! Удаляем таблицу типов
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_INCOME_TYPES")
         onCreate(db)
     }
 
@@ -127,7 +125,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
 
 
 
-    private fun getIncomeTypeIdByName(db: SQLiteDatabase, typeName: String): Long? {
+    fun getIncomeTypeIdByName(db: SQLiteDatabase, typeName: String): Long? {
         return db.query(
             TABLE_INCOME_TYPES,
             arrayOf(COL_TYPE_ID),
@@ -138,7 +136,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
             if (cursor.moveToFirst()) {
                 cursor.getLong(cursor.getColumnIndexOrThrow(COL_TYPE_ID))
             } else {
-                null // Возвращаем null, если тип не найден
+                null
             }
             }
     }
@@ -147,7 +145,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
 
     fun updateIncome(income: Income, incomeId: Long) {
         writableDatabase.use { db ->
-            val typeId = getIncomeTypeIdByName(db, income.type) // !!! Передаем db
+            val typeId = getIncomeTypeIdByName(db, income.type)
 
             if (typeId != null) {
                 val values = ContentValues().apply {
@@ -177,7 +175,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
                 arrayOf(incomeId.toString()),
                 null, null, null
             ).use { cursor ->
-                if (cursor.moveToFirst()) { // Проверяем, есть ли данные
+                if (cursor.moveToFirst()) {
                     val typeId = cursor.getLong(cursor.getColumnIndexOrThrow(COL_INCOME_TYPE_ID))
                     Income(
                         cursor.getLong(cursor.getColumnIndexOrThrow(COL_INCOME_ID)),
@@ -186,7 +184,7 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
                         getIncomeTypeNameById(db, typeId) ?: "Unknown Type"
                     )
                 } else {
-                    null // Возвращаем null, если доход не найден
+                    null
                 }
             }
         }
@@ -205,10 +203,8 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
             if (cursor.moveToFirst()) {
                 cursor.getString(cursor.getColumnIndexOrThrow(COL_TYPE_NAME))
             } else {
-                null // Возвращаем null, если тип не найден
+                null
             }
         }
     }
-
-
 }
