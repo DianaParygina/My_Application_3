@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication_3.expense.MainActivity
 import com.example.myapplication_3.income.IncomeActivity
+import com.example.myapplication_3.person.PersonActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 abstract class BaseMenu : AppCompatActivity() {
@@ -24,6 +25,7 @@ abstract class BaseMenu : AppCompatActivity() {
             R.id.listPicture -> Intent(this, BalanceActivity::class.java)
             R.id.Main -> Intent(this, MainActivity::class.java)
             R.id.Income -> Intent(this, IncomeActivity::class.java)
+            R.id.Generate -> Intent(this, PersonActivity::class.java)
             else -> null
         }
 

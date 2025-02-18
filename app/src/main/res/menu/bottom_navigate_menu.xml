@@ -9,4 +9,7 @@
     <item android:id="@+id/Income"
         android:title="@string/income"
         android:icon="@drawable/money" />
+    <item android:id="@+id/Generate"
+        android:title="@string/generate_data"
+        android:icon="@drawable/generate" />
 </menu>

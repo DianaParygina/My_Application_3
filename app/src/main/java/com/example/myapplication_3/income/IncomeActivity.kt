@@ -25,10 +25,12 @@ import com.example.myapplication_3.BaseMenu
 import com.example.myapplication_3.MyApplication
 import com.example.myapplication_3.R
 import com.example.myapplication_3.SharedFinanceViewModel
+import kotlinx.coroutines.cancel
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.coroutines.coroutineContext
 
 class IncomeActivity : BaseMenu() {
 
