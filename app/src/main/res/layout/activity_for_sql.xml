@@ -50,6 +50,14 @@
             android:layout_marginLeft="260dp"
             android:layout_marginTop="10dp"/>
 
+        <Button
+            android:id="@+id/stop_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Стоп"
+            android:layout_marginLeft="280dp"
+            android:layout_marginTop="60dp"/>
+
 
     </FrameLayout>
 

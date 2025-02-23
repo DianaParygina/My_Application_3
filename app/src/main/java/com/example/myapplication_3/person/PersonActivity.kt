@@ -43,7 +43,6 @@ class PersonActivity: BaseMenu() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(getLayoutResId())
         recyclerView = findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -62,6 +61,12 @@ class PersonActivity: BaseMenu() {
         val buttonGenerateTreads = findViewById<Button>(R.id.button_generate_data_with_tread)
         buttonGenerateTreads.setOnClickListener {
             generateDataWithThreads()
+        }
+
+        val buttonStop = findViewById<Button>(R.id.stop_button)
+        buttonStop.setOnClickListener {
+            viewModel.stopDataGeneration()
+            Toast.makeText(this@PersonActivity, "Генерация приостановлена", Toast.LENGTH_SHORT).show()
         }
 
         viewModel.personsLiveData.observe(this) { persons ->
@@ -112,7 +117,6 @@ class PersonActivity: BaseMenu() {
 
 
             handler.post {
-                viewModel.loadPersons()
                 button.isEnabled = true
                 findViewById<ProgressBar>(R.id.progress_bar).visibility = View.GONE
                 Toast.makeText(this@PersonActivity, "Данные сгенерированы и добавлены", Toast.LENGTH_SHORT).show()
