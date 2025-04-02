@@ -41,10 +41,52 @@ class PersonActivity: BaseMenu() {
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newFixedThreadPool(4)
 
+    private var currentSpecialtyId: Int? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         recyclerView = findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(this)
+
+
+
+
+        viewModel.loadPersonsFromNetwork()
+
+        val loadPersonsButton = findViewById<Button>(R.id.load_persons_button) // Предполагается, что у вас есть кнопка с этим ID
+        loadPersonsButton.setOnClickListener {
+            viewModel.cancelRequests() // Отмена предыдущих запросов
+            loadPersonsFromNetwork()
+        }
+
+        viewModel.personsLiveDataApi.observe(this) { persons ->
+            val adapter = PersonAdapter(persons)
+            recyclerView.adapter = adapter
+        }
+
+        viewModel.specialtiesLiveDataApi.observe(this) { specialties ->
+            if (specialties.isNotEmpty()) {
+                currentSpecialtyId = specialties[0].id
+                loadPersonsFromNetwork(currentSpecialtyId)  // Загрузка данных по первой специальности
+            }
+        }
+
+
+        viewModel.isLoading.observe(this) { isLoading ->
+            val progressBar = findViewById<ProgressBar>(R.id.progress_bar)
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        viewModel.errorMessage.observe(this) { errorMessage ->
+            if (errorMessage != null) {
+                Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+                viewModel.clearErrorMessage()
+            }
+        }
+
+
+
+
 
 
         val cancelButton = findViewById<Button>(R.id.cancel_button)
@@ -79,6 +121,7 @@ class PersonActivity: BaseMenu() {
         }
 
         updateBottomNavigationView(R.id.Generate)
+        loadPersonsFromNetwork()
     }
 
     override fun getLayoutResId(): Int {
@@ -128,5 +171,9 @@ class PersonActivity: BaseMenu() {
         super.onDestroy()
         coroutineScope.cancel()
         executor.shutdown()
+    }
+
+    private fun loadPersonsFromNetwork(specialtyId: Int? = null) {
+        viewModel.loadPersonsFromNetwork(specialtyId)
     }
 }

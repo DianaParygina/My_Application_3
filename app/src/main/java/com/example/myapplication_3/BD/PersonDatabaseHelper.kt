@@ -5,7 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class PersonDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "person_db", null, 7) {
+class PersonDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "person_db", null, 8) {
 
     companion object {
         const val TABLE_PERSONS = "person"

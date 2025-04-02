@@ -1,4 +1,3 @@
-import com.example.myapplication_3.person.Person
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup

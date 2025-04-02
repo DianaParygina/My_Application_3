@@ -1,17 +1,20 @@
 import android.content.ContentValues
-import android.content.Context
+import android.database.Cursor
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication_3.BD.PersonDatabaseHelper
+import com.example.myapplication_3.network.Specialty
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.database.Cursor
-import com.example.myapplication_3.person.Person
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import okhttp3.internal.http2.ErrorCode
+import okhttp3.internal.http2.StreamResetException
+import java.io.IOException
 import java.util.UUID
 import kotlin.random.Random
 
@@ -20,9 +23,52 @@ class PersonViewModel(private val dbHelper: PersonDatabaseHelper) : ViewModel() 
     private val random = Random(System.currentTimeMillis())
     private var generationJob: Job? = null
 
+    private val apiService = ApiUtils.getApiService()
+    val personsLiveDataApi = MutableLiveData<List<Person>>()
+    val specialtiesLiveDataApi = MutableLiveData<List<Specialty>>()
+    val isLoading = MutableLiveData<Boolean>()
+    val errorMessage = MutableLiveData<String?>()
+
     init {
         loadPersons()
     }
+
+
+    fun loadPersonsFromNetwork(specialtyId: Int? = null) = viewModelScope.launch {
+        isLoading.postValue(true)
+        try {
+            // 1. Загрузка специальностей (если specialtyId не указан)
+            val specialties = if (specialtyId == null) {
+                apiService.getSpecialties()
+            } else {
+                null // Не загружаем специальности, если specialtyId указан
+            }
+            specialtiesLiveDataApi.postValue(specialties ?: emptyList())
+
+            // 2. Загрузка людей на основе specialtyId (или первой специальности, если specialtyId не указан)
+            val persons = when {
+                specialtyId != null -> {
+                    apiService.getPersonsBySpecialty(specialtyId)
+                }
+                specialties != null && specialties.isNotEmpty() -> {
+                    val firstSpecialtyId = specialties[0].id
+                    apiService.getPersonsBySpecialty(firstSpecialtyId)
+                }
+                else -> {
+                    emptyList() // Или другое значение по умолчанию, если специальности не найдены
+                }
+            }
+
+            // 3. Обновление LiveData
+            personsLiveDataApi.postValue(persons ?: emptyList())
+
+        } catch (e: Exception) {
+            e.printStackTrace() // Для отладки
+            personsLiveDataApi.postValue(emptyList()) // Или другое значение по умолчанию
+            isLoading.postValue(false)
+        }
+    }
+
 
     fun loadPersons() {
         viewModelScope.launch {
@@ -115,4 +161,33 @@ class PersonViewModel(private val dbHelper: PersonDatabaseHelper) : ViewModel() 
     fun stopDataGeneration() {
         generationJob?.cancel()
     }
+
+
+
+    fun clearErrorMessage() {
+        errorMessage.value = null
+    }
+
+
+    private fun handleNetworkError(e: IOException) {
+        if (e is StreamResetException && e.errorCode == ErrorCode.CANCEL) {
+            // Запрос был отменен пользователем, ничего не делаем
+            Log.d("Network", "Запрос отменен")
+        } else {
+            handleError(e) // Обработка других сетевых ошибок
+        }
+    }
+
+    private fun handleError(e: Exception) {
+        errorMessage.postValue("Ошибка: ${e.message}")
+        Log.e("Network", "Ошибка сети", e)
+        personsLiveDataApi.postValue(emptyList())
+    }
+
+
+    fun cancelRequests() {
+        viewModelScope.coroutineContext.cancelChildren()
+    }
+
+
 }
