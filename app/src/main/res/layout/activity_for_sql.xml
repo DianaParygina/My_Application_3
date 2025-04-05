@@ -33,7 +33,14 @@
             android:layout_marginStart="5dp"
             android:layout_marginTop="10dp"/>
 
-        <Button
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp">
+
+
+            <Button
         android:id="@+id/load_persons_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -41,6 +48,14 @@
         android:layout_marginStart="5dp"
         android:layout_marginTop="10dp"/>
 
+            <Button
+                android:id="@+id/stop_load_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Стоп для сети"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"/>
+        </LinearLayout>
 
         <LinearLayout
         android:layout_width="match_parent"

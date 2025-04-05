@@ -1,5 +1,4 @@
 package com.example.myapplication_3.person
-
 import PersonAdapter
 import PersonViewModel
 import PersonViewModelFactory
@@ -30,18 +29,15 @@ import kotlin.random.Random
 import kotlinx.coroutines.*
 import java.util.UUID
 import java.util.concurrent.Executors
-
 class PersonActivity: BaseMenu() {
-
     private lateinit var recyclerView: RecyclerView
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val viewModel: PersonViewModel by viewModels {
-        PersonViewModelFactory(PersonDatabaseHelper(this))
+        PersonViewModelFactory(PersonDatabaseHelper(this), this)
     }
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newFixedThreadPool(4)
 
-    private var currentSpecialtyId: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,24 +47,17 @@ class PersonActivity: BaseMenu() {
 
 
 
-        viewModel.loadPersonsFromNetwork()
-
-        val loadPersonsButton = findViewById<Button>(R.id.load_persons_button) // Предполагается, что у вас есть кнопка с этим ID
-        loadPersonsButton.setOnClickListener {
-            viewModel.cancelRequests() // Отмена предыдущих запросов
-            loadPersonsFromNetwork()
-        }
 
         viewModel.personsLiveDataApi.observe(this) { persons ->
             val adapter = PersonAdapter(persons)
             recyclerView.adapter = adapter
         }
 
+
         viewModel.specialtiesLiveDataApi.observe(this) { specialties ->
-            if (specialties.isNotEmpty()) {
-                currentSpecialtyId = specialties[0].id
-                loadPersonsFromNetwork(currentSpecialtyId)  // Загрузка данных по первой специальности
-            }
+            val randomId = Random.nextInt(specialties.size)
+            val selectedSpecialtyId = specialties[randomId].id
+            viewModel.loadPersonsFromNetwork(selectedSpecialtyId)
         }
 
 
@@ -82,6 +71,19 @@ class PersonActivity: BaseMenu() {
                 Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
                 viewModel.clearErrorMessage()
             }
+        }
+
+
+        val loadPersonsButton = findViewById<Button>(R.id.load_persons_button) // Предполагается, что у вас есть кнопка с этим ID
+        loadPersonsButton.setOnClickListener {
+            viewModel.cancelRequests()
+            viewModel.loadSpecialties()
+        }
+
+        val buttonStopRetrofit = findViewById<Button>(R.id.stop_load_button)
+        buttonStopRetrofit.setOnClickListener {
+            viewModel.cancelRequests()
+            Toast.makeText(this@PersonActivity, "Загрузка остановлена", Toast.LENGTH_SHORT).show()
         }
 
 
@@ -120,8 +122,9 @@ class PersonActivity: BaseMenu() {
             viewModel.loadPersons()
         }
 
+
         updateBottomNavigationView(R.id.Generate)
-        loadPersonsFromNetwork()
+//        loadPersonsFromNetwork()
     }
 
     override fun getLayoutResId(): Int {
@@ -171,9 +174,5 @@ class PersonActivity: BaseMenu() {
         super.onDestroy()
         coroutineScope.cancel()
         executor.shutdown()
-    }
-
-    private fun loadPersonsFromNetwork(specialtyId: Int? = null) {
-        viewModel.loadPersonsFromNetwork(specialtyId)
     }
 }
