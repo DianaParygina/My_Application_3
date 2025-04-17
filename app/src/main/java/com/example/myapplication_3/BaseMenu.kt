@@ -1,11 +1,18 @@
 package com.example.myapplication_3
 
+import BalanceFragment
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import com.example.myapplication_3.expense.ExpenseFragment
 import com.example.myapplication_3.expense.MainActivity
-import com.example.myapplication_3.income.IncomeActivity
-import com.example.myapplication_3.person.PersonActivity
+//import com.example.myapplication_3.expense.MainActivity
+//import com.example.myapplication_3.finance.ExpenseFragment
+import com.example.myapplication_3.finance.IncomeFragment
+//import com.example.myapplication_3.income.IncomeActivity
+//import com.example.myapplication_3.person.PersonActivity
+import com.example.myapplication_3.person.PersonFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 abstract class BaseMenu : AppCompatActivity() {
@@ -14,30 +21,33 @@ abstract class BaseMenu : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(getLayoutResId())
 
+
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.setOnNavigationItemSelectedListener { item ->
             handleNavigationItemClick(item.itemId)
         }
+
+        if (savedInstanceState == null) {
+            handleNavigationItemClick(R.id.listPicture)
+        }
     }
 
     private fun handleNavigationItemClick(itemId: Int): Boolean {
-        val intent: Intent? = when (itemId) {
-            R.id.listPicture -> Intent(this, BalanceActivity::class.java)
-            R.id.Main -> Intent(this, MainActivity::class.java)
-            R.id.Income -> Intent(this, IncomeActivity::class.java)
-            R.id.Generate -> Intent(this, PersonActivity::class.java)
-            else -> null
+        return when (itemId) {
+            R.id.listPicture -> { replaceFragment(BalanceFragment()); true }
+            R.id.Main -> { replaceFragment(ExpenseFragment()); true }
+            R.id.Income -> { replaceFragment(IncomeFragment()); true }
+            R.id.Generate -> { replaceFragment(PersonFragment()); true }
+            else -> false
         }
-
-        intent?.let {
-            if (it.component?.className != this::class.java.name) {
-                startActivity(it)
-            }
-            return true
-        }
-        return false
     }
 
+
+    private fun replaceFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
+    }
 
     abstract fun getLayoutResId(): Int
 

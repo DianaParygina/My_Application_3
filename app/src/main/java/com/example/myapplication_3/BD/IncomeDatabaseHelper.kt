@@ -8,7 +8,7 @@ import android.util.Log
 import com.example.myapplication_3.income.Income
 import com.example.myapplication_3.income.IncomeType
 
-class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 10) {
+class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 15) {
 
     companion object {
         const val TABLE_INCOMES = "incomes"
@@ -47,6 +47,9 @@ class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "financ
         insertIncomeType(db, "Zp")
         insertIncomeType(db, "Present")
 
+        val initialIncomeType = getIncomeTypeIdByName(db,"Зарплата")
+        if (initialIncomeType!=null){
+            insertIncome(15000.0, "01.01.2024", initialIncomeType)}
     }
 
     fun insertIncomeType(db: SQLiteDatabase, typeName: String): Long {
