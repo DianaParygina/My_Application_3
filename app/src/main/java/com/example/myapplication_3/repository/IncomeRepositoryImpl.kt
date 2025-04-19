@@ -1,0 +1,30 @@
+package com.example.myapplication_3.repository
+
+import com.example.myapplication_3.Frameworks.database.IncomeDatabaseHelper
+import com.example.myapplication_3.Entities.Income
+import android.content.Context
+
+class IncomeRepositoryImpl(private val context: Context) {
+
+    private val dbHelper: IncomeDatabaseHelper by lazy { IncomeDatabaseHelper(context) }
+
+    fun getAllIncomes(): List<Income> {
+        return dbHelper.getAllIncomes()
+    }
+
+    fun insertIncome(income: Income): Long {
+        return dbHelper.insertIncome(income.amount, income.date, dbHelper.getIncomeTypeIdByName(dbHelper.writableDatabase, income.type) ?: 0)
+    }
+
+    fun updateIncome(income: Income, incomeId: Long) {
+        dbHelper.updateIncome(income, incomeId)
+    }
+
+    fun deleteIncome(incomeId: Long) {
+        dbHelper.deleteIncome(incomeId)
+    }
+
+    fun getIncomeById(incomeId: Long): Income? {
+        return dbHelper.getIncomeById(incomeId)
+    }
+}
