@@ -9,9 +9,9 @@ import com.example.myapplication_3.Entities.ExpenseItem
 import com.example.myapplication_3.Entities.Income
 import com.example.myapplication_3.repository.ExpenseRepositoryImpl
 import com.example.myapplication_3.repository.IncomeRepositoryImpl
-import com.example.myapplication_3.usecase.balance.GetTotalBalanceUseCase
-import com.example.myapplication_3.usecase.expense.*
-import com.example.myapplication_3.usecase.income.*
+import com.example.myapplication_3.UseCase.balance.*
+import com.example.myapplication_3.UseCase.expense.*
+import com.example.myapplication_3.UseCase.income.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,12 +44,12 @@ class SharedFinanceViewModel(
     init {
         viewModelScope.launch {
             _totalBalance.value = withContext(Dispatchers.IO) { getTotalBalanceUseCase() }
-        }
 
-        // Загрузка данных из репозиториев
-        viewModelScope.launch {
-            totalIncome = getAllIncomesUseCase().sumOf { it.amount }
-            totalExpense = getAllExpensesUseCase().sumOf { it.expense }
+            val incomeItems = withContext(Dispatchers.IO) { getAllIncomesUseCase() }
+            totalIncome = incomeItems.sumOf { it.amount }
+
+            val expenseItems = withContext(Dispatchers.IO) { getAllExpensesUseCase() }
+            totalExpense = expenseItems.sumOf { it.expense }
             updateTotalBalance()
         }
     }
@@ -82,15 +82,19 @@ class SharedFinanceViewModel(
 
     fun deleteIncome(income: Income) {
         viewModelScope.launch {
-            income.id?.let { deleteIncomeUseCase(it) }
-            totalIncome -= income.amount
-            updateTotalBalance()
+            income.id?.let {
+                withContext(Dispatchers.IO) { deleteIncomeUseCase(it) }
+                totalIncome -= income.amount
+                updateTotalBalance()
+            }
         }
     }
 
 
     private fun updateTotalBalance() {
-        _totalBalance.value = totalIncome - totalExpense
+        viewModelScope.launch(Dispatchers.Main) {
+            _totalBalance.value = totalIncome - totalExpense
+        }
     }
 
     fun getTotalBalance(): Double {

@@ -1,4 +1,4 @@
-package com.example.myapplication_3.usecase.income
+package com.example.myapplication_3.UseCase.income
 
 import com.example.myapplication_3.repository.IncomeRepositoryImpl
 

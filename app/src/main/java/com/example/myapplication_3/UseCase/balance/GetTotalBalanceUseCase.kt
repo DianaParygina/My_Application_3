@@ -1,4 +1,4 @@
-package com.example.myapplication_3.usecase.balance
+package com.example.myapplication_3.UseCase.balance
 
 import com.example.myapplication_3.repository.ExpenseRepositoryImpl
 import com.example.myapplication_3.repository.IncomeRepositoryImpl

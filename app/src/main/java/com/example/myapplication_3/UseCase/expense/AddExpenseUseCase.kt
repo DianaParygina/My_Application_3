@@ -1,4 +1,4 @@
-package com.example.myapplication_3.usecase.expense
+package com.example.myapplication_3.UseCase.expense
 
 import com.example.myapplication_3.Entities.ExpenseItem
 import com.example.myapplication_3.Entities.Income
