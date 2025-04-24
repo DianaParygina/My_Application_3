@@ -1,6 +1,5 @@
 package com.example.myapplication_3.Frameworks.ui
 
-import com.example.myapplication_3.External.SharedFinanceViewModelFactory
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
@@ -11,7 +10,7 @@ import android.view.*
 import android.widget.*
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.*
 import com.example.myapplication_3.Frameworks.database.IncomeDatabaseHelper
 import com.example.myapplication_3.Entities.Income
@@ -19,18 +18,16 @@ import com.example.myapplication_3.Frameworks.files.BinFileHandler
 import com.example.myapplication_3.Frameworks.files.PDFGeneratorIncome
 import com.example.myapplication_3.R
 import com.example.myapplication_3.Controllers.SharedFinanceViewModel
-//import SharedFinanceViewModel
-import com.example.myapplication_3.repository.ExpenseRepositoryImpl
-import com.example.myapplication_3.repository.IncomeRepositoryImpl
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-//import androidx.hilt.navigation.fragment.hiltViewModel
 
+@AndroidEntryPoint
 class IncomeFragment : Fragment() {
     private lateinit var incomeAdapter: IncomeAdapter
-    private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
+    private val sharedFinanceViewModel: SharedFinanceViewModel by viewModels()
     private lateinit var recyclerView: RecyclerView
     private lateinit var dbHelper: IncomeDatabaseHelper
     var useSql = false
@@ -53,13 +50,6 @@ class IncomeFragment : Fragment() {
 
         // Инициализация базы данных
         dbHelper = IncomeDatabaseHelper(requireContext())
-
-        // Инициализация ViewModel
-        val incomeRepository = IncomeRepositoryImpl(requireContext())
-        val expenseRepository = ExpenseRepositoryImpl(requireContext())
-
-        sharedFinanceViewModel = ViewModelProvider(this, SharedFinanceViewModelFactory(requireActivity().application, incomeRepository, expenseRepository)).get(
-            SharedFinanceViewModel::class.java)
 
         // Инициализация бинарного файла
         BinFileHandler.initialize(requireContext(), "incomes.bin")

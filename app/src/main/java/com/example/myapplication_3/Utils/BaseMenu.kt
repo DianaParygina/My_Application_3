@@ -13,7 +13,9 @@ import com.example.myapplication_3.Frameworks.ui.IncomeFragment
 import com.example.myapplication_3.Frameworks.ui.PersonFragment
 import com.example.myapplication_3.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 abstract class BaseMenu : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

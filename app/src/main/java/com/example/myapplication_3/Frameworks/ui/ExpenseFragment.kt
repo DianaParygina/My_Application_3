@@ -1,7 +1,5 @@
 package com.example.myapplication_3.Frameworks.ui
 
-//import SharedFinanceViewModel
-import com.example.myapplication_3.External.SharedFinanceViewModelFactory
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Intent
@@ -11,23 +9,22 @@ import android.widget.*
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.*
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import com.example.myapplication_3.*
-//import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication_3.Entities.ExpenseItem
 import com.example.myapplication_3.Frameworks.files.PDFGeneratorExpense
 import com.example.myapplication_3.Frameworks.files.XLSFileHandler
 import com.example.myapplication_3.Controllers.SharedFinanceViewModel
-import com.example.myapplication_3.repository.ExpenseRepositoryImpl
-import com.example.myapplication_3.repository.IncomeRepositoryImpl
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class ExpenseFragment : Fragment() {
 
     private lateinit var expenseAdapter: ExpenseAdapter
-    private lateinit var sharedFinanceViewModel: SharedFinanceViewModel
+    private val sharedFinanceViewModel: SharedFinanceViewModel by viewModels()
     lateinit var recyclerView: RecyclerView
     private var selectedMenuItemPosition: Int = -1
 
@@ -37,11 +34,6 @@ class ExpenseFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_expense, container, false)
         XLSFileHandler.initialize(requireContext(), "expenses.xls")
-        val incomeRepository = IncomeRepositoryImpl(requireContext())
-        val expenseRepository = ExpenseRepositoryImpl(requireContext())
-
-        sharedFinanceViewModel = ViewModelProvider(this, SharedFinanceViewModelFactory(requireActivity().application, incomeRepository, expenseRepository)).get(
-            SharedFinanceViewModel::class.java)
         expenseAdapter = ExpenseAdapter(mutableListOf(), sharedFinanceViewModel, this)
         recyclerView = view.findViewById(R.id.recyclerViewExpenses)
         recyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)

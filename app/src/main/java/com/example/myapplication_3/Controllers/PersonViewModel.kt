@@ -10,12 +10,19 @@ import com.example.myapplication_3.Frameworks.database.PersonDatabaseHelper
 import com.example.myapplication_3.Frameworks.network.ApiUtils
 import com.example.myapplication_3.UseCase.person.GetAllPersonsUseCase
 import com.example.myapplication_3.UseCase.person.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class PersonViewModel(private val dbHelper: PersonDatabaseHelper, context: Context) : ViewModel() {
+@HiltViewModel
+class PersonViewModel @Inject constructor(
+    private val dbHelper: PersonDatabaseHelper,
+    @ApplicationContext private val context: Context
+) : ViewModel() {
 
     private val getAllPersonsUseCase = GetAllPersonsUseCase(dbHelper)
     private val generatePersonsUseCase = GeneratePersonsUseCase(dbHelper)

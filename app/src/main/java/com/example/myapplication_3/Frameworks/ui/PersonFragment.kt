@@ -8,14 +8,12 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-//import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.myapplication_3.External.PersonViewModelFactory
-import com.example.myapplication_3.Frameworks.database.PersonDatabaseHelper
 import com.example.myapplication_3.R
 import com.example.myapplication_3.Controllers.PersonViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,10 +22,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
+@AndroidEntryPoint
 class PersonFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private lateinit var viewModel: PersonViewModel
+    private val viewModel: PersonViewModel by viewModels()
     private val executor = Executors.newFixedThreadPool(4)
 
     override fun onCreateView(
@@ -40,12 +39,6 @@ class PersonFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // Инициализация ViewModel
-        viewModel = ViewModelProvider(
-            this,
-            PersonViewModelFactory(PersonDatabaseHelper(requireContext()), requireContext())
-        ).get(PersonViewModel::class.java)
 
         recyclerView = view.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())

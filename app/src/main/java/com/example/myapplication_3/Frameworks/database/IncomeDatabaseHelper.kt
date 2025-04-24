@@ -7,8 +7,12 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.example.myapplication_3.Entities.Income
 import com.example.myapplication_3.Entities.IncomeType
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class IncomeDatabaseHelper(context: Context) : SQLiteOpenHelper(context, "finance_db", null, 15) {
+@Singleton
+class IncomeDatabaseHelper @Inject constructor(@ApplicationContext context: Context) : SQLiteOpenHelper(context, "finance_db", null, 15) {
 
     companion object {
         const val TABLE_INCOMES = "incomes"

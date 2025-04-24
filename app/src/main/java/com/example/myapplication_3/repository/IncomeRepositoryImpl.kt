@@ -3,8 +3,12 @@ package com.example.myapplication_3.repository
 import com.example.myapplication_3.Frameworks.database.IncomeDatabaseHelper
 import com.example.myapplication_3.Entities.Income
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class IncomeRepositoryImpl(private val context: Context) {
+@Singleton
+class IncomeRepositoryImpl @Inject constructor(@ApplicationContext private val context: Context) {
 
     private val dbHelper: IncomeDatabaseHelper by lazy { IncomeDatabaseHelper(context) }
 

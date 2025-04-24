@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication_3.Entities.ExpenseItem
 import com.example.myapplication_3.Entities.Income
@@ -12,15 +13,18 @@ import com.example.myapplication_3.repository.IncomeRepositoryImpl
 import com.example.myapplication_3.UseCase.balance.*
 import com.example.myapplication_3.UseCase.expense.*
 import com.example.myapplication_3.UseCase.income.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class SharedFinanceViewModel(
-    application: Application,
+@HiltViewModel
+class SharedFinanceViewModel @Inject constructor(
     private val incomeRepository: IncomeRepositoryImpl,
     private val expenseRepository: ExpenseRepositoryImpl
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     private val getTotalBalanceUseCase = GetTotalBalanceUseCase(incomeRepository, expenseRepository)
 
@@ -37,9 +41,8 @@ class SharedFinanceViewModel(
     private var totalIncome = 0.0
     private var totalExpense = 0.0
 
-    val totalBalance: LiveData<Double>
-        get() = _totalBalance
     private val _totalBalance = MutableLiveData<Double>(0.0)
+    val totalBalance: LiveData<Double> = _totalBalance
 
     init {
         viewModelScope.launch {

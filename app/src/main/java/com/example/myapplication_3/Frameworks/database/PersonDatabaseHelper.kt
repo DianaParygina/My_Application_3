@@ -6,10 +6,14 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.content.Context
 import com.example.myapplication_3.Entities.Person
 import com.example.myapplication_3.Entities.Specialty
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.random.Random
 
-class PersonDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+@Singleton
+class PersonDatabaseHelper @Inject constructor(@ApplicationContext context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         const val DATABASE_NAME = "persons.db"

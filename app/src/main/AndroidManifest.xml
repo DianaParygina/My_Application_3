@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".Frameworks.ui.MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -20,18 +21,13 @@
         android:usesCleartextTraffic="true">
 
         <activity android:name=".Frameworks.ui.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            tools:ignore="Instantiatable">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-<!--        <activity android:name="com.example.myapplication_3.income.IncomeActivity"-->
-<!--            android:label="@string/income"/>-->
-<!--        <activity android:name="com.example.myapplication_3.BalanceActivity"-->
-<!--            android:label="@string/list"/>-->
-<!--        <activity android:name="com.example.myapplication_3.person.PersonActivity"-->
-<!--            android:label="@string/generate_data"/>-->
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -1,6 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-kapt")
+    alias(libs.plugins.hilt)
+}
+
+kapt {
+    correctErrorTypes = true
 }
 
 android {
@@ -39,6 +45,10 @@ android {
             excludes += ("/META-INF/{AL2.0,LGPL2.1}")
         }
     }
+    buildFeatures {
+        viewBinding = true
+        dataBinding = true
+    }
 }
 
 dependencies {
@@ -60,6 +70,11 @@ dependencies {
 
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 
 
     implementation(libs.androidx.media3.exoplayer)
