@@ -18,33 +18,47 @@ import com.example.myapplication_3.Entities.ExpenseItem
 import com.example.myapplication_3.Frameworks.files.PDFGeneratorExpense
 import com.example.myapplication_3.Frameworks.files.XLSFileHandler
 import com.example.myapplication_3.Controllers.SharedFinanceViewModel
+import com.example.myapplication_3.databinding.FragmentBalanceBinding
+import com.example.myapplication_3.databinding.FragmentExpenseBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class ExpenseFragment : Fragment() {
 
+    private var _binding: FragmentExpenseBinding? = null
+    private val binding get() = _binding!!
     private lateinit var expenseAdapter: ExpenseAdapter
     private val sharedFinanceViewModel: SharedFinanceViewModel by viewModels()
     lateinit var recyclerView: RecyclerView
     private var selectedMenuItemPosition: Int = -1
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_expense, container, false)
+    ): View {
+        _binding = FragmentExpenseBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         XLSFileHandler.initialize(requireContext(), "expenses.xls")
         expenseAdapter = ExpenseAdapter(mutableListOf(), sharedFinanceViewModel, this)
-        recyclerView = view.findViewById(R.id.recyclerViewExpenses)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        recyclerView.adapter = expenseAdapter
 
-        view.findViewById<Button>(R.id.button_pdf_expense).setOnClickListener {
+        binding.recyclerViewExpenses.apply {
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            adapter = expenseAdapter
+        }
+
+        binding.buttonPdfExpense.setOnClickListener {
             PDFGeneratorExpense.generatePdf(requireContext(), expenseAdapter.expenseItems)
             showToast("PDF отчет по расходам создан")
         }
 
-        view.findViewById<Button>(R.id.button_pdf_expense_open).setOnClickListener {
+        binding.buttonPdfExpenseOpen.setOnClickListener {
             PDFGeneratorExpense.getPdfFilePath(requireContext())?.let { pdfPath ->
                 val uri = FileProvider.getUriForFile(
                     requireContext(),
@@ -59,13 +73,11 @@ class ExpenseFragment : Fragment() {
             } ?: showToast("Ошибка: PDF файл не найден")
         }
 
-        PagerSnapHelper().attachToRecyclerView(recyclerView)
+        PagerSnapHelper().attachToRecyclerView(binding.recyclerViewExpenses)
+        ItemTouchHelper(createItemTouchHelperCallback()).attachToRecyclerView(binding.recyclerViewExpenses)
+        registerForContextMenu(binding.recyclerViewExpenses)
 
-        ItemTouchHelper(createItemTouchHelperCallback()).attachToRecyclerView(recyclerView)
-
-        registerForContextMenu(recyclerView)
-
-        return view
+        loadExpenses()
     }
 
     private fun createItemTouchHelperCallback(): ItemTouchHelper.SimpleCallback {

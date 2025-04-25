@@ -7,17 +7,24 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.*
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.Spinner
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.*
-import com.example.myapplication_3.Frameworks.database.IncomeDatabaseHelper
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.PagerSnapHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication_3.Entities.Income
+import com.example.myapplication_3.Frameworks.database.IncomeDatabaseHelper
 import com.example.myapplication_3.Frameworks.files.BinFileHandler
 import com.example.myapplication_3.Frameworks.files.PDFGeneratorIncome
-import com.example.myapplication_3.R
 import com.example.myapplication_3.Controllers.SharedFinanceViewModel
+import com.example.myapplication_3.R
+import com.example.myapplication_3.databinding.FragmentIncomeBinding
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.text.SimpleDateFormat
@@ -26,9 +33,10 @@ import kotlin.collections.ArrayList
 
 @AndroidEntryPoint
 class IncomeFragment : Fragment() {
+    private var _binding: FragmentIncomeBinding? = null
+    private val binding get() = _binding!!
     private lateinit var incomeAdapter: IncomeAdapter
     private val sharedFinanceViewModel: SharedFinanceViewModel by viewModels()
-    private lateinit var recyclerView: RecyclerView
     private lateinit var dbHelper: IncomeDatabaseHelper
     var useSql = false
     private lateinit var sharedPreferences: SharedPreferences
@@ -40,8 +48,13 @@ class IncomeFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_income, container, false)
+    ): View {
+        _binding = FragmentIncomeBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         // Инициализация SharedPreferences
         sharedPreferences = requireActivity().getPreferences(Context.MODE_PRIVATE)
@@ -56,99 +69,86 @@ class IncomeFragment : Fragment() {
 
         // Настройка RecyclerView
         incomeAdapter = IncomeAdapter(ArrayList(), sharedFinanceViewModel, this, dbHelper)
-        recyclerView = view.findViewById(R.id.recyclerViewIncome)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        recyclerView.adapter = incomeAdapter
-
+        binding.recyclerViewIncome.apply {
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            adapter = incomeAdapter
+        }
 
         // Кнопки для переключения режима SQL
-        val buttonSql = view.findViewById<Button>(R.id.button_sql)
-        buttonSql.setOnClickListener {
+        binding.buttonSql.setOnClickListener {
             if (!currentModeIsSql) {
                 useSql = true
                 saveUseSqlState()
                 loadIncomes()
                 currentModeIsSql = true
-                Toast.makeText(requireContext(), "Работа с SQL включена", Toast.LENGTH_SHORT).show()
+                showToast("Работа с SQL включена")
             }
         }
 
-        val buttonSqlDontUse = view.findViewById<Button>(R.id.button_sql_dont_use)
-        buttonSqlDontUse.setOnClickListener {
+        binding.buttonSqlDontUse.setOnClickListener {
             if (currentModeIsSql) {
                 useSql = false
                 saveUseSqlState()
                 loadIncomes()
                 currentModeIsSql = false
-                Toast.makeText(requireContext(), "Работа с SQL выключена", Toast.LENGTH_SHORT).show()
+                showToast("Работа с SQL выключена")
             }
         }
 
         // Кнопка для генерации PDF
-        val buttonPdfIncome = view.findViewById<Button>(R.id.button_pdf_income)
-        buttonPdfIncome.setOnClickListener {
+        binding.buttonPdfIncome.setOnClickListener {
             val incomes = incomeAdapter.incomes
             PDFGeneratorIncome.generatePdf(requireContext(), incomes)
-            val pdfPathIncome = PDFGeneratorIncome.getPdfFilePath(requireContext())
-            if (pdfPathIncome != null) {
+            PDFGeneratorIncome.getPdfFilePath(requireContext())?.let { pdfPathIncome ->
                 val uriIncome = FileProvider.getUriForFile(
                     requireContext(),
                     "${requireActivity().packageName}.provider",
                     File(pdfPathIncome)
                 )
-                val intentIncome = Intent(Intent.ACTION_VIEW)
-                intentIncome.setDataAndType(uriIncome, "application/pdf")
-                intentIncome.flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_GRANT_READ_URI_PERMISSION
-                startActivity(Intent.createChooser(intentIncome, "Открыть PDF"))
+                Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uriIncome, "application/pdf")
+                    flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    startActivity(Intent.createChooser(this, "Открыть PDF"))
+                }
             }
         }
 
-
         // Настройка PagerSnapHelper для постраничного скроллинга
-        val snapHelper = PagerSnapHelper()
-        snapHelper.attachToRecyclerView(recyclerView)
+        PagerSnapHelper().attachToRecyclerView(binding.recyclerViewIncome)
 
         // Настройка ItemTouchHelper для свайпов
-        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.DOWN or ItemTouchHelper.UP) {
-            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-                return false
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.bindingAdapterPosition
-                if (direction == ItemTouchHelper.DOWN) {
-                    incomeAdapter.deleteIncome(position)
-                } else if (direction == ItemTouchHelper.UP) {
-                    incomeAdapter.showEditIncomeDialog(position)
-                }
-            }
-        })
-        itemTouchHelper.attachToRecyclerView(recyclerView)
+        ItemTouchHelper(createItemTouchHelperCallback()).attachToRecyclerView(binding.recyclerViewIncome)
 
         // Загрузка данных
         loadIncomes()
 
         // Регистрация контекстного меню
-        registerForContextMenu(recyclerView)
-
-        return view
+        registerForContextMenu(binding.recyclerViewIncome)
     }
 
+    private fun createItemTouchHelperCallback(): ItemTouchHelper.SimpleCallback {
+        return object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.DOWN or ItemTouchHelper.UP) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false
 
-//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-//        super.onViewCreated(view, savedInstanceState)
-//        loadIncomes()
-//
-//        if (incomeAdapter.incomes.isEmpty()) {
-//            val testIncome = Income(null, 100.0, "01.01.2024", "Зарплата")
-//            incomeAdapter.addIncome(testIncome)
-//            BinFileHandler.addLineToBin(testIncome)
-//            incomeAdapter.notifyDataSetChanged()
-//        }
-//    }
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                when (direction) {
+                    ItemTouchHelper.DOWN -> incomeAdapter.deleteIncome(position)
+                    ItemTouchHelper.UP -> incomeAdapter.showEditIncomeDialog(position)
+                }
+            }
+        }
+    }
 
-
-    override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo?) {
+    override fun onCreateContextMenu(
+        menu: ContextMenu,
+        v: View,
+        menuInfo: ContextMenu.ContextMenuInfo?
+    ) {
         super.onCreateContextMenu(menu, v, menuInfo)
         requireActivity().menuInflater.inflate(R.menu.context_menu_income, menu)
     }
@@ -169,95 +169,94 @@ class IncomeFragment : Fragment() {
 
     fun showContextMenuForItem(position: Int, view: View) {
         selectedPositionForContextMenu = position
-//        registerForContextMenu(view) // Регистрируем перед показом
         view.showContextMenu()
-        unregisterForContextMenu(view) // Отменяем регистрацию после показа
+        unregisterForContextMenu(view)
     }
 
     private fun showAddIncomeDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Добавить доход")
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_income, null)
-        builder.setView(view)
+        AlertDialog.Builder(requireContext()).apply {
+            setTitle("Добавить доход")
+            val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_income, null)
+            setView(view)
 
-        val inputIncome = view.findViewById<EditText>(R.id.input_amount)
-        val inputDate = view.findViewById<EditText>(R.id.input_date)
+            val inputIncome = view.findViewById<EditText>(R.id.input_amount)
+            val inputDate = view.findViewById<EditText>(R.id.input_date)
 
-        val calendar = Calendar.getInstance()
-        val datePicker = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
-            calendar.set(Calendar.YEAR, year)
-            calendar.set(Calendar.MONTH, month)
-            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            val format = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
-            inputDate.setText(format.format(calendar.time))
-        }
-
-        inputDate.setOnClickListener {
-            DatePickerDialog(
-                requireContext(),
-                datePicker,
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
-            ).show()
-        }
-
-        val spinner = view.findViewById<Spinner>(R.id.income_type_spinner)
-        val incomeTypes = dbHelper.getAllIncomeTypes()
-
-        val adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            incomeTypes.map { it.name })
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-
-        builder.setPositiveButton("OK") { _, _ ->
-            val incomeString = inputIncome.text.toString()
-            val dateString = inputDate.text.toString()
-            if (incomeString.isNotEmpty() && dateString.isNotEmpty()) {
-                val incomeAmount = incomeString.toDoubleOrNull()
-                if (incomeAmount != null) {
-                    val selectedType = incomeTypes[spinner.selectedItemPosition]
-
-                    val newIncome = if (useSql) {
-                        val newIncomeId = dbHelper.insertIncome(incomeAmount, dateString, selectedType.id.toLong())
-                        Income(newIncomeId, incomeAmount, dateString, selectedType.name)
-                    } else {
-                        Income(null, incomeAmount, dateString, selectedType.name)
-                    }
-
-                    incomeAdapter.addIncome(newIncome)
-                    showToast("Доход добавлен")
-                    sharedFinanceViewModel.addIncome(incomeAmount, dateString, selectedType.name)
-                } else {
-                    showToast("Введите корректную сумму")
-                }
-            } else {
-                showToast("Заполните все поля")
+            val calendar = Calendar.getInstance()
+            val datePicker = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
+                calendar.set(Calendar.YEAR, year)
+                calendar.set(Calendar.MONTH, month)
+                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                inputDate.setText(SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(calendar.time))
             }
-        }
 
-        builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
-        builder.show()
+            inputDate.setOnClickListener {
+                DatePickerDialog(
+                    requireContext(),
+                    datePicker,
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            }
+
+            val spinner = view.findViewById<Spinner>(R.id.income_type_spinner)
+            val incomeTypes = dbHelper.getAllIncomeTypes()
+
+            ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                incomeTypes.map { it.name }
+            ).also { adapter ->
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinner.adapter = adapter
+            }
+
+            setPositiveButton("OK") { _, _ ->
+                val incomeString = inputIncome.text.toString()
+                val dateString = inputDate.text.toString()
+                if (incomeString.isNotEmpty() && dateString.isNotEmpty()) {
+                    incomeString.toDoubleOrNull()?.let { incomeAmount ->
+                        val selectedType = incomeTypes[spinner.selectedItemPosition]
+
+                        val newIncome = if (useSql) {
+                            val newIncomeId = dbHelper.insertIncome(incomeAmount, dateString, selectedType.id.toLong())
+                            Income(newIncomeId, incomeAmount, dateString, selectedType.name)
+                        } else {
+                            Income(null, incomeAmount, dateString, selectedType.name)
+                        }
+
+                        incomeAdapter.addIncome(newIncome)
+                        showToast("Доход добавлен")
+                        sharedFinanceViewModel.addIncome(incomeAmount, dateString, selectedType.name)
+                    } ?: showToast("Введите корректную сумму")
+                } else {
+                    showToast("Заполните все поля")
+                }
+            }
+
+            setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
+            show()
+        }
     }
 
     private fun showAddTypeDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Добавить тип дохода")
-        val input = EditText(requireContext())
-        builder.setView(input)
+        AlertDialog.Builder(requireContext()).apply {
+            setTitle("Добавить тип дохода")
+            val input = EditText(requireContext())
+            setView(input)
 
-        builder.setPositiveButton("OK") { _, _ ->
-            val typeName = input.text.toString().trim()
-            if (typeName.isNotEmpty()) {
-                dbHelper.insertIncomeType(dbHelper.writableDatabase, typeName)
-                loadIncomes()
-                showToast("Тип дохода добавлен")
+            setPositiveButton("OK") { _, _ ->
+                input.text.toString().trim().takeIf { it.isNotEmpty() }?.let { typeName ->
+                    dbHelper.insertIncomeType(dbHelper.writableDatabase, typeName)
+                    loadIncomes()
+                    showToast("Тип дохода добавлен")
+                }
             }
+
+            setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
+            show()
         }
-        builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
-        builder.show()
     }
 
     private fun loadIncomes() {
@@ -284,5 +283,10 @@ class IncomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         loadIncomes()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
