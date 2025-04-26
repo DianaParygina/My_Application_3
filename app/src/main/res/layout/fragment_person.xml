@@ -1,99 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="10dp">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <ScrollView
+    <data>
+        <variable
+            name="viewModel"
+            type="com.example.myapplication_3.controllers.PersonViewModel" />
+    </data>
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottom_navigation">
+        android:padding="10dp">
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-
-            <Button
-                android:id="@+id/button_generate_data"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Сгенерировать данные (Coroutine)"
-                android:layout_marginStart="5dp"
-                android:layout_marginTop="10dp"/>
-
-            <Button
-                android:id="@+id/button_generate_data_with_tread"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Сгенерировать данные (Thread)"
-                android:layout_marginStart="5dp"
-                android:layout_marginTop="10dp"/>
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="10dp">
-
+                android:orientation="vertical">
 
                 <Button
-                    android:id="@+id/load_persons_button"
+                    android:id="@+id/button_generate_data"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Загрузить из сети"
+                    android:text="Сгенерировать данные (Coroutine)"
                     android:layout_marginStart="5dp"
-                    android:layout_marginTop="10dp"/>
+                    android:layout_marginTop="10dp"
+                    android:onClick="@{() -> viewModel.generateAndInsertData(10000)}"/>
 
                 <Button
-                    android:id="@+id/stop_load_button"
+                    android:id="@+id/button_generate_data_with_tread"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Стоп для сети"
+                    android:text="Сгенерировать данные (Thread)"
                     android:layout_marginStart="5dp"
+                    android:layout_marginTop="10dp"
+                    android:onClick="@{() -> viewModel.generateAndInsertData(10000)}"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp">
+
+                    <Button
+                        android:id="@+id/load_persons_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Загрузить из сети"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="10dp"
+                        android:onClick="@{() -> viewModel.loadSpecialties()}"/>
+
+                    <Button
+                        android:id="@+id/stop_load_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Стоп для сети"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="10dp"
+                        android:onClick="@{() -> viewModel.cancelRequests()}"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp">
+
+                    <Button
+                        android:id="@+id/cancel_button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Очистить"
+                        android:layout_marginEnd="5dp"
+                        android:onClick="@{() -> viewModel.clearData()}"/>
+
+                    <Button
+                        android:id="@+id/stop_button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Стоп"
+                        android:onClick="@{() -> viewModel.stopDataGeneration()}"/>
+                </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/progress_bar"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:visibility="gone"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"/>
+
             </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="10dp">
-
-                <Button
-                    android:id="@+id/cancel_button"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Отчистить"
-                    android:layout_marginEnd="5dp"/>
-
-                <Button
-                    android:id="@+id/stop_button"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Стоп" />
-            </LinearLayout>
-
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                style="?android:attr/progressBarStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dp"
-                android:visibility="gone"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"/>
-
-        </LinearLayout>
-    </ScrollView>
-</RelativeLayout>
+        </ScrollView>
+    </RelativeLayout>
+</layout>

@@ -1,7 +1,7 @@
 package com.example.myapplication_3.repository
 
-import com.example.myapplication_3.Entities.ExpenseItem
-import com.example.myapplication_3.Frameworks.files.XLSFileHandler
+import com.example.myapplication_3.entities.ExpenseItem
+import com.example.myapplication_3.frameworks.files.XLSFileHandler
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

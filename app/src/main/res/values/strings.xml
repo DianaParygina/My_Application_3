@@ -6,4 +6,7 @@
     <string name="add_income_title">Добавить доход</string>
     <string name="generate_data">Личные данные</string>
     <string name="balance_format">Ваш баланс: %.2f руб</string>
+    <string name="pdf_generation_error">Ошибка при создании PDF</string>
+    <string name="pdf_not_found_error">PDF файл не найден</string>
+    <string name="open_pdf">Открыть PDF</string>
 </resources>

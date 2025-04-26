@@ -1,7 +1,7 @@
 package com.example.myapplication_3.repository
 
-import com.example.myapplication_3.Frameworks.database.IncomeDatabaseHelper
-import com.example.myapplication_3.Entities.Income
+import com.example.myapplication_3.frameworks.database.IncomeDatabaseHelper
+import com.example.myapplication_3.entities.Income
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

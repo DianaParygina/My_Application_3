@@ -1,15 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="10dp">
+    xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
+        <variable
+            name="viewModel"
+            type="com.example.myapplication_3.controllers.SharedFinanceViewModel" />
+
+        <variable
+            name="fragment"
+            type="com.example.myapplication_3.frameworks.ui.IncomeFragment" />
+    </data>
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="10dp"
+        tools:context=".frameworks.ui.IncomeFragment">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewIncome"
@@ -23,8 +31,8 @@
             android:layout_height="wrap_content"
             android:text="Посмотреть отчёт в pdf"
             android:layout_marginStart="90dp"
-            android:layout_marginTop="100dp"/>
-
+            android:layout_marginTop="100dp"
+            android:onClick="@{() -> fragment.generatePdfReport()}"/>
 
         <Button
             android:id="@+id/button_sql"
@@ -32,8 +40,8 @@
             android:layout_height="wrap_content"
             android:text="Работать с sql"
             android:layout_marginStart="130dp"
-            android:layout_marginTop="150dp"/>
-
+            android:layout_marginTop="150dp"
+            android:onClick="@{() -> fragment.enableSqlMode()}" />
 
         <Button
             android:id="@+id/button_sql_dont_use"
@@ -41,6 +49,8 @@
             android:layout_height="wrap_content"
             android:text="Не работать с sql"
             android:layout_marginStart="115dp"
-            android:layout_marginTop="200dp"/>
+            android:layout_marginTop="200dp"
+            android:onClick="@{() -> fragment.disableSqlMode()}" />
+
     </FrameLayout>
-</RelativeLayout>
+</layout>

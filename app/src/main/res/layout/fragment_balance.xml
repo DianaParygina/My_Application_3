@@ -5,13 +5,13 @@
     <data>
         <variable
             name="viewModel"
-            type="com.example.myapplication_3.Controllers.SharedFinanceViewModel" />
+            type="com.example.myapplication_3.controllers.SharedFinanceViewModel" />
     </data>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".Frameworks.ui.BalanceFragment">
+        tools:context=".frameworks.ui.BalanceFragment">
 
         <TextView
             android:id="@+id/tvBalance"
@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="30dp"
-            android:text="@{@string/balance_format(viewModel.totalBalance)}"
+            android:text="@{String.format(`Баланс: %.2f`, viewModel.totalBalance)}"
             android:textSize="21sp" />
 
     </FrameLayout>

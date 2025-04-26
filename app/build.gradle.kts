@@ -38,6 +38,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+        freeCompilerArgs = listOf("-Xjvm-default=all")
     }
     packagingOptions {
         resources {
@@ -76,6 +77,7 @@ dependencies {
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    implementation("androidx.hilt:hilt-navigation-fragment:1.0.0")
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.cronet.embedded)
